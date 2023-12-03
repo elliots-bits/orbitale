@@ -29,14 +29,17 @@ pub fn update(
     tiles: Query<Entity, With<BackgroundTileMarker>>,
 ) {
     if let Ok((cam_transform, cam_proj)) = camera.get_single() {
+        let cam_pos = cam_transform.translation.xy();
+        // debug!("Cam pos: {:?}", cam_pos);
         let cam_area = cam_proj.area;
+        // debug!("Cam area: {:?}", cam_area);
         let current_tile_min_index = (
-            (cam_area.min.x / background.tilesize.0 as f32).floor() as i32,
-            (cam_area.min.y / background.tilesize.0 as f32).floor() as i32,
+            ((cam_area.min.x + cam_pos.x) / background.tilesize.0 as f32).floor() as i32,
+            ((cam_area.min.y + cam_pos.y) / background.tilesize.1 as f32).floor() as i32,
         );
         let current_tile_max_index = (
-            (cam_area.max.x / background.tilesize.0 as f32).ceil() as i32,
-            (cam_area.max.y / background.tilesize.0 as f32).ceil() as i32,
+            ((cam_area.max.x + cam_pos.x) / background.tilesize.0 as f32).ceil() as i32,
+            ((cam_area.max.y + cam_pos.y) / background.tilesize.1 as f32).ceil() as i32,
         );
         let mut visible_stacks_indices = HashSet::<(i32, i32)>::new();
         // debug!("{:?} {:?}", current_tile_min_index, current_tile_max_index);
@@ -50,6 +53,7 @@ pub fn update(
             loaded_stacks_indices.insert((x, y));
         }
         for stack_index_to_unload in loaded_stacks_indices.difference(&visible_stacks_indices) {
+            // debug!("Unloading background at {:?}", stack_index_to_unload);
             if let Some(entities_to_despawn) = background.tiles.remove(stack_index_to_unload) {
                 for e in entities_to_despawn {
                     commands.entity(e).despawn_recursive();
@@ -59,6 +63,7 @@ pub fn update(
             }
         }
         for &stack_index_to_load in visible_stacks_indices.difference(&loaded_stacks_indices) {
+            // debug!("Loading background at {:?}", stack_index_to_load);
             let ecmd = commands.spawn(SpriteBundle {
                 texture: background.texture.clone(),
                 transform: Transform::from_translation(Vec3 {
