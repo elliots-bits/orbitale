@@ -50,7 +50,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         Collider::ball(32.0),
         ColliderMassProperties::Mass(1.0),
         Damping {
-            linear_damping: 0.0,
+            linear_damping: 0.01,
             angular_damping: 1.0,
         },
         Velocity::default(),

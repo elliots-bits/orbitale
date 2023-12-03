@@ -1,4 +1,5 @@
 use bevy::{core_pipeline::clear_color::ClearColorConfig, prelude::*};
+use bevy_rapier2d::dynamics::Velocity;
 
 use crate::player::PlayerMarker;
 
@@ -24,12 +25,18 @@ pub fn setup(mut commands: Commands) {
 }
 
 pub fn update(
-    mut camera: Query<&mut Transform, (With<GameCameraMarker>, Without<PlayerMarker>)>,
-    player: Query<&Transform, With<PlayerMarker>>,
+    mut camera: Query<
+        (&mut Transform, &mut OrthographicProjection),
+        (With<GameCameraMarker>, Without<PlayerMarker>),
+    >,
+    player: Query<(&Transform, &Velocity), With<PlayerMarker>>,
 ) {
-    if let Ok(mut cam_t) = camera.get_single_mut() {
-        if let Ok(player_t) = player.get_single() {
+    if let Ok((mut cam_t, mut proj)) = camera.get_single_mut() {
+        if let Ok((player_t, player_v)) = player.get_single() {
+            let speed = player_v.linvel.length();
+            let scale = (((speed / 600.0 - 1.0).tanh() + 1.0) / 2.0).powf(2.0) * 3.0 + 1.0;
             cam_t.translation = player_t.translation;
+            proj.scale = scale;
         }
     }
 }
