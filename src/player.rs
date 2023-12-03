@@ -1,11 +1,12 @@
 use bevy::prelude::*;
 use bevy_rapier2d::{
-    dynamics::{Ccd, ExternalImpulse, RigidBody, Velocity},
+    dynamics::{Ccd, Damping, ExternalImpulse, RigidBody, Velocity},
     geometry::{Collider, ColliderMassProperties},
 };
 
 const DRIVE_ENGINE_IMPULSE: f32 = 2.0;
-const ROTATION_MUL: f32 = 20.0;
+const BRAKE_ENGINE_IMPULSE: f32 = 1.0;
+const ROTATION_MUL: f32 = 15.0;
 
 #[derive(Component)]
 pub struct PlayerMarker;
@@ -20,6 +21,9 @@ pub fn control(
         let mut angular = 0.0;
         if keys.pressed(KeyCode::Up) {
             linear.y += DRIVE_ENGINE_IMPULSE;
+        }
+        if keys.pressed(KeyCode::Down) {
+            linear.y -= BRAKE_ENGINE_IMPULSE;
         }
         if keys.pressed(KeyCode::Right) {
             angular -= DRIVE_ENGINE_IMPULSE * ROTATION_MUL;
@@ -45,6 +49,10 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         RigidBody::Dynamic,
         Collider::ball(32.0),
         ColliderMassProperties::Mass(1.0),
+        Damping {
+            linear_damping: 0.0,
+            angular_damping: 1.0,
+        },
         Velocity::default(),
     ));
 }
