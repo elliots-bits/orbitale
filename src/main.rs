@@ -1,3 +1,4 @@
+mod background;
 mod camera;
 mod player;
 
@@ -15,8 +16,8 @@ fn main() {
         }))
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(1.0))
         .add_plugins(RapierDebugRenderPlugin::default())
-        .add_systems(Startup, (camera::setup, player::setup))
-        .add_systems(Update, player::control)
+        .add_systems(Startup, (camera::setup, player::setup, background::setup))
+        .add_systems(Update, (player::control, background::update))
         .insert_resource(RapierConfiguration {
             gravity: Vec2::ZERO,
             timestep_mode: TimestepMode::Variable {
