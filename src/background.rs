@@ -73,6 +73,15 @@ pub fn update(
                 }),
                 ..default()
             });
+            let ecmd = commands.spawn(SpriteBundle {
+                texture: background.texture.clone(),
+                transform: Transform::from_translation(Vec3 {
+                    x: (stack_index_to_load.0 * background.tilesize.0 as i32) as f32,
+                    y: (stack_index_to_load.1 * background.tilesize.1 as i32) as f32,
+                    z: -1.0,
+                }),
+                ..default()
+            });
             background
                 .tiles
                 .insert(stack_index_to_load, vec![ecmd.id()]); // todo: Build a true parralax stack

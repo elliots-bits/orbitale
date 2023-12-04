@@ -33,10 +33,11 @@ pub fn update(
 ) {
     if let Ok((mut cam_t, mut proj)) = camera.get_single_mut() {
         if let Ok((player_t, player_v)) = player.get_single() {
-            let speed = player_v.linvel.length();
-            let scale = (((speed / 600.0 - 1.0).tanh() + 1.0) / 2.0).powf(2.0) * 3.0 + 1.0;
             cam_t.translation = player_t.translation;
-            proj.scale = scale;
+
+            let speed = player_v.linvel.length();
+            let target_scale = (((speed / 600.0 - 1.0).tanh() + 1.0) / 2.0).powf(2.0) * 3.0 + 1.0;
+            proj.scale = proj.scale + (target_scale - proj.scale) / 100.0;
         }
     }
 }
