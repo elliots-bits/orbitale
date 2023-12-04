@@ -10,9 +10,10 @@ use crate::lasers;
 
 const DRIVE_ENGINE_IMPULSE: f32 = 2.0;
 const BRAKE_ENGINE_IMPULSE: f32 = 1.0;
+const LASER_KNOCKBACK_IMPULSE: f32 = 10.0;
 const ROTATION_MUL: f32 = 15.0;
 
-const LASER_COOLDOWN_S: f32 = 0.25;
+const LASER_COOLDOWN_S: f32 = 0.1;
 
 #[derive(Component)]
 pub struct PlayerMarker;
@@ -43,31 +44,22 @@ pub fn control(
             angular += DRIVE_ENGINE_IMPULSE * ROTATION_MUL;
         }
         let local_forward = transform.right().xy();
-        if keys.pressed(KeyCode::Space) {
-            let fwd = transform.up().xy();
-            let laser_angle = fwd.y.atan2(fwd.x) + PI / 2.0;
-            if let Some(last_shot) = laser_ability.last_shot {
-                if last_shot.elapsed().as_secs_f32() >= LASER_COOLDOWN_S {
-                    lasers::spawn(
-                        &mut commands,
-                        transform.translation.xy() + transform.up().xy().normalize() * 32.0,
-                        Vec2 { x: 0.0, y: 1000.0 }.rotate(local_forward) + velocity.linvel,
-                        laser_angle,
-                        lasers::LaserOrigin::Player,
-                    );
-                    laser_ability.last_shot = Some(Instant::now());
-                }
-            } else {
-                lasers::spawn(
-                    &mut commands,
-                    transform.translation.xy() + transform.up().xy().normalize() * 32.0,
-                    Vec2 { x: 0.0, y: 1000.0 }.rotate(local_forward) + velocity.linvel,
-                    laser_angle,
-                    lasers::LaserOrigin::Player,
-                );
-                laser_ability.last_shot = Some(Instant::now());
-            }
+        if keys.pressed(KeyCode::Space)
+            && (laser_ability.last_shot.is_none()
+                || laser_ability.last_shot.unwrap().elapsed().as_secs_f32() >= LASER_COOLDOWN_S)
+        {
+            let laser_angle = local_forward.y.atan2(local_forward.x);
+            lasers::spawn(
+                &mut commands,
+                transform.translation.xy() + transform.up().xy().normalize() * 32.0,
+                Vec2 { x: 0.0, y: 1000.0 }.rotate(local_forward) + velocity.linvel,
+                laser_angle,
+                lasers::LaserOrigin::Player,
+            );
+            laser_ability.last_shot = Some(Instant::now());
+            linear.y -= LASER_KNOCKBACK_IMPULSE;
         }
+
         commands.entity(entity).insert(ExternalImpulse {
             impulse: linear.rotate(local_forward),
             torque_impulse: angular,

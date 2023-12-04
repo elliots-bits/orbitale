@@ -65,10 +65,10 @@ pub fn spawn(
             shot_at: Instant::now(),
         },
         TransformBundle::from_transform(transform),
-        RigidBody::Dynamic,
+        RigidBody::KinematicVelocityBased,
         Ccd::enabled(),
         ColliderMassProperties::Mass(0.001),
-        Collider::cuboid(1.0, 10.0),
+        Collider::ball(2.0),
         Velocity::linear(velocity),
     ));
 }
