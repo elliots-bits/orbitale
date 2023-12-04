@@ -37,8 +37,7 @@ fn main() {
                 alien_ship::update,
                 lasers::draw,
                 background::update,
-            )
-                .chain(),
+            ),
         )
         .insert_resource(RapierConfiguration {
             gravity: Vec2::ZERO,

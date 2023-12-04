@@ -8,15 +8,15 @@ use crate::{
     player::PlayerMarker,
 };
 
-const DRIVE_ENGINE_IMPULSE: f32 = 2.0;
-const LASER_KNOCKBACK_IMPULSE: f32 = 20.0;
+const DRIVE_ENGINE_IMPULSE: f32 = 4.0;
+const LASER_KNOCKBACK_IMPULSE: f32 = 50.0;
 const ROTATION_MUL: f32 = 25.0;
 
 pub const ALIEN_SHIP_LASER_COOLDOWN_S: f32 = 0.5;
 
-const MAX_SHOOT_DISTANCE: f32 = 500.0;
+const MAX_SHOOT_DISTANCE: f32 = 1000.0;
 const MAX_SHOOT_THETA: f32 = PI / 8.0;
-const MAX_DRIVE_THETA: f32 = PI / 4.0;
+const MAX_DRIVE_THETA: f32 = PI / 8.0;
 
 #[derive(Component)]
 pub struct AlienShipMarker;

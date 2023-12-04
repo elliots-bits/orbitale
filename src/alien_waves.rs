@@ -14,8 +14,9 @@ use crate::{
     lasers::LaserAbility,
     player::PlayerMarker,
 };
+use rand::distributions::Uniform;
 
-const WAVE_DURATION_S: f32 = 20.0;
+const WAVE_DURATION_S: f32 = 30.0;
 
 #[derive(Resource)]
 pub struct AlienWave {
@@ -41,13 +42,13 @@ pub fn update(
         let spawn_wave = wave.started_at.is_none()
             || wave.started_at.unwrap().elapsed().as_secs_f32() >= WAVE_DURATION_S;
         if spawn_wave {
-            let n_to_spawn = 2_u32.pow(wave.current_wave - 1);
-            wave.current_wave += 1;
-            wave.started_at = Some(Instant::now());
+            let angle_side = Uniform::new(0.0, PI * 2.0);
+            let radius_side = Uniform::new(1000.0, 2000.0);
+            let n_to_spawn = wave.current_wave * 2;
             // Spawn at random locations around player for now
             for _ in 0..n_to_spawn {
-                let r = rng.gen::<f32>() * 250.0 + 250.0;
-                let theta = rng.gen::<f32>() * 2.0 * PI;
+                let r = rng.sample(radius_side);
+                let theta = rng.sample(angle_side);
                 let pos = Vec3::new(
                     player_t.translation.x + theta.cos() * r,
                     player_t.translation.y + theta.sin() * r,
@@ -74,6 +75,8 @@ pub fn update(
                     },
                     Velocity::default(),
                 ));
+                wave.current_wave += 1;
+                wave.started_at = Some(Instant::now());
             }
         }
     }
