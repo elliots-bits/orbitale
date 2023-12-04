@@ -1,3 +1,5 @@
+mod alien_ship;
+mod alien_waves;
 mod background;
 mod camera;
 mod lasers;
@@ -16,13 +18,23 @@ fn main() {
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(1.0))
         .add_plugins(ShapePlugin::default())
         // .add_plugins(RapierDebugRenderPlugin::default())
-        .add_systems(Startup, (camera::setup, player::setup, background::setup))
+        .add_systems(
+            Startup,
+            (
+                camera::setup,
+                player::setup,
+                alien_waves::setup,
+                background::setup,
+            ),
+        )
         .add_systems(
             Update,
             (
                 player::control,
                 lasers::update,
                 camera::update,
+                alien_waves::update,
+                alien_ship::update,
                 lasers::draw,
                 background::update,
             )

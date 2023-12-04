@@ -12,6 +12,18 @@ use bevy_vector_shapes::{painter::ShapePainter, shapes::RectPainter};
 
 pub const LASER_LIFETIME_S: f32 = 5.0;
 
+#[derive(Component)]
+pub struct LaserAbility {
+    pub last_shot: Option<Instant>,
+    pub cooldown: Duration,
+}
+
+impl LaserAbility {
+    pub fn ready(&self) -> bool {
+        self.last_shot.is_none() || self.last_shot.unwrap().elapsed() >= self.cooldown
+    }
+}
+
 pub enum LaserOrigin {
     Player,
     Enemy,
@@ -42,7 +54,7 @@ pub fn draw(query: Query<(&Transform, &Laser)>, mut painter: ShapePainter) {
         painter.set_rotation(transform.rotation);
         painter.set_translation(transform.translation);
         painter.color = color;
-        painter.rect(Vec2 { x: 1.0, y: 10.0 });
+        painter.rect(Vec2 { x: 10.0, y: 1.0 });
     }
 }
 
