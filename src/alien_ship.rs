@@ -17,6 +17,7 @@ pub const ALIEN_SHIP_LASER_COOLDOWN_S: f32 = 0.5;
 const MAX_SHOOT_DISTANCE: f32 = 1000.0;
 const MAX_SHOOT_THETA: f32 = PI / 8.0;
 const MAX_DRIVE_THETA: f32 = PI / 8.0;
+const MIN_ROTATION_THETA: f32 = PI / 32.0; // The aliens are unbeatable if they aim directly at the player
 
 #[derive(Component)]
 pub struct AlienShipMarker;
@@ -70,7 +71,9 @@ pub fn update(
                 // This is the same principle as a PID control loop except we don't apply its perfect maths.
                 // If we did, the aliens would crush the player with perfect driving.
                 // Instead, we approximate an incompetent driver behavior.
-                if time_to_oriented_s >= 0.25 {
+                if orientation_to_player.abs() <= MIN_ROTATION_THETA {
+                    0.0
+                } else if time_to_oriented_s >= 0.25 {
                     // If it'll take more than 0.25 seconds to align with the player at this rate, we'll rotate towards it.
                     orientation_to_player.signum()
                 } else if time_to_oriented_s >= 0.1 {
