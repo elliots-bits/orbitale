@@ -30,7 +30,7 @@ pub fn update(
     // The actual AI is going to be a bit tricky.
     // We'll at least have to implement a basic PID control loop.
 
-    // For now, it is very dumb. It aims at the bad and accelerates if it points in kinda in the player direction.
+    // For now, it is very dumb. It aims at the player and accelerates if it points in kinda in the player direction.
 
     if let Ok(player_t) = player.get_single() {
         for (entity, t, v, mut laser_ability) in query.iter_mut() {

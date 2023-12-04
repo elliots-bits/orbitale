@@ -13,7 +13,7 @@ const BRAKE_ENGINE_IMPULSE: f32 = 2.0;
 const LASER_KNOCKBACK_IMPULSE: f32 = 10.0;
 const ROTATION_MUL: f32 = 8.0;
 
-const LASER_COOLDOWN_S: f32 = 0.1;
+const LASER_COOLDOWN_S: f32 = 0.025;
 
 #[derive(Component)]
 pub struct PlayerMarker;

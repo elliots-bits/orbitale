@@ -10,7 +10,7 @@ use bevy_rapier2d::{
 };
 use bevy_vector_shapes::{painter::ShapePainter, shapes::RectPainter};
 
-pub const LASER_LIFETIME_S: f32 = 5.0;
+pub const LASER_LIFETIME_S: f32 = 2.0;
 
 #[derive(Component)]
 pub struct LaserAbility {
