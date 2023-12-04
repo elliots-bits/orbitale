@@ -8,9 +8,9 @@ use bevy_rapier2d::{
 
 use crate::lasers::{self, LaserAbility};
 
-const DRIVE_ENGINE_IMPULSE: f32 = 4.0;
+const DRIVE_ENGINE_IMPULSE: f32 = 6.0;
 const BRAKE_ENGINE_IMPULSE: f32 = 2.0;
-const LASER_KNOCKBACK_IMPULSE: f32 = 10.0;
+const LASER_KNOCKBACK_IMPULSE: f32 = 3.0;
 const ROTATION_MUL: f32 = 8.0;
 
 const LASER_COOLDOWN_S: f32 = 0.025;
@@ -75,8 +75,8 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         Collider::ball(32.0),
         ColliderMassProperties::Mass(1.0),
         Damping {
-            linear_damping: 0.02,
-            angular_damping: 0.25,
+            linear_damping: 0.0,
+            angular_damping: 2.0,
         },
         Velocity::default(),
     ));

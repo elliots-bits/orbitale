@@ -8,7 +8,7 @@ use crate::{
     player::PlayerMarker,
 };
 
-const DRIVE_ENGINE_IMPULSE: f32 = 4.0;
+const DRIVE_ENGINE_IMPULSE: f32 = 3.0;
 const LASER_KNOCKBACK_IMPULSE: f32 = 50.0;
 const ROTATION_MUL: f32 = 25.0;
 

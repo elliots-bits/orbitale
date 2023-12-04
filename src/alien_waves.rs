@@ -70,7 +70,7 @@ pub fn update(
                     Collider::ball(32.0),
                     ColliderMassProperties::Mass(1.0),
                     Damping {
-                        linear_damping: 0.05,
+                        linear_damping: 0.0,
                         angular_damping: 0.5,
                     },
                     Velocity::default(),
