@@ -38,9 +38,7 @@ pub fn update(
 
             let local_forward = t.up().xy();
             let d = (player_t.translation - t.translation).xy();
-            let theta = d.y.atan2(d.x);
-            let ship_angle = local_forward.y.atan2(local_forward.x);
-            let orientation_to_player = (theta - ship_angle) % (2.0 * PI);
+            let orientation_to_player = local_forward.angle_between(d);
 
             if d.length() < MAX_SHOOT_DISTANCE
                 && orientation_to_player.abs() < MAX_SHOOT_THETA
@@ -64,11 +62,6 @@ pub fn update(
             // Let's make the aliens dumb. But not TOO dumb.
             let time_to_oriented_s = orientation_to_player / v.angvel;
 
-            debug!("d theta: {}", theta);
-            debug!("Ship angle: {}", ship_angle);
-            debug!("Orientation to player: {}", orientation_to_player);
-            debug!("Time to oriented (s): {}", time_to_oriented_s);
-
             let torque_sign = if v.angvel > PI * 2.0 * 2.0 {
                 // If we're spinning at more than 2 rotations per second, just stabilize.
                 -v.angvel.signum()
@@ -77,25 +70,20 @@ pub fn update(
                 // This is the same principle as a PID control loop except we don't apply its perfect maths.
                 // If we did, the aliens would crush the player with perfect driving.
                 // Instead, we approximate an incompetent driver behavior.
-                if time_to_oriented_s >= 0.5 {
-                    // If it'll take more than 0.5s to align with the player at this rate, we'll rotate towards it.
-                    debug!("Rotating towards player");
+                if time_to_oriented_s >= 0.25 {
+                    // If it'll take more than 0.25 seconds to align with the player at this rate, we'll rotate towards it.
                     orientation_to_player.signum()
-                } else if time_to_oriented_s >= 0.25 {
+                } else if time_to_oriented_s >= 0.1 {
                     // We let it rotate.
-                    debug!("Letting it rotate");
                     0.0
                 } else if time_to_oriented_s >= 0.0 {
-                    // When we'll reach the desired orientation under 0.25s, we brake.
-                    debug!("Braking");
+                    // When we'll reach the desired orientation under 0.1s, we brake.
                     -orientation_to_player.signum()
                 } else {
                     // We're rotating in the wrong direction and my trigonometry is terrible. Just rotate towards the player.
                     orientation_to_player.signum()
                 }
             };
-
-            debug!("");
 
             angular_impulse += torque_sign * DRIVE_ENGINE_IMPULSE * ROTATION_MUL;
 

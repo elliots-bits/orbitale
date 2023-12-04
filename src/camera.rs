@@ -36,7 +36,7 @@ pub fn update(
             cam_t.translation = player_t.translation;
 
             let speed = player_v.linvel.length();
-            let target_scale = (((speed / 600.0 - 1.0).tanh() + 1.0) / 2.0).powf(2.0) * 3.0 + 1.0;
+            let target_scale = (((speed / 600.0 - 1.0).tanh() + 1.0) / 2.0).powf(2.0) * 2.0 + 2.0;
             proj.scale = proj.scale + (target_scale - proj.scale) / 100.0;
         }
     }

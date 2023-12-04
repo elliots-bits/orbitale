@@ -44,7 +44,7 @@ pub fn control(
             lasers::spawn(
                 &mut commands,
                 transform.translation.xy() + transform.up().xy().normalize() * 32.0,
-                Vec2 { x: 1000.0, y: 0.0 }.rotate(local_forward) + velocity.linvel,
+                Vec2 { x: 2000.0, y: 0.0 }.rotate(local_forward) + velocity.linvel,
                 laser_angle,
                 lasers::LaserOrigin::Player,
             );

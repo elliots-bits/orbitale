@@ -54,7 +54,7 @@ pub fn draw(query: Query<(&Transform, &Laser)>, mut painter: ShapePainter) {
         painter.set_rotation(transform.rotation);
         painter.set_translation(transform.translation);
         painter.color = color;
-        painter.rect(Vec2 { x: 10.0, y: 1.0 });
+        painter.rect(Vec2 { x: 20.0, y: 1.0 });
     }
 }
 

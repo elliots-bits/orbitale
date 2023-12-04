@@ -15,7 +15,7 @@ use crate::{
     player::PlayerMarker,
 };
 
-const WAVE_DURATION_S: f32 = 60.0;
+const WAVE_DURATION_S: f32 = 20.0;
 
 #[derive(Resource)]
 pub struct AlienWave {
