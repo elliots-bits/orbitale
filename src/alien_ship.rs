@@ -8,7 +8,7 @@ use crate::{
     player::PlayerMarker,
 };
 
-const DRIVE_ENGINE_IMPULSE: f32 = 1.0;
+const DRIVE_ENGINE_IMPULSE: f32 = 2.0;
 const LASER_KNOCKBACK_IMPULSE: f32 = 20.0;
 const ROTATION_MUL: f32 = 25.0;
 
@@ -29,7 +29,7 @@ pub fn update(
     // The actual AI is going to be a bit tricky.
     // We'll at least have to implement a basic PID control loop.
 
-    // For now, it is very dumb. It aims at the bad and accelerates if it points in kinda the player direction.
+    // For now, it is very dumb. It aims at the bad and accelerates if it points in kinda in the player direction.
 
     if let Ok(player_t) = player.get_single() {
         for (entity, t, v, mut laser_ability) in query.iter_mut() {
@@ -40,8 +40,10 @@ pub fn update(
             let d = (player_t.translation - t.translation).xy();
             let theta = d.y.atan2(d.x);
             let ship_angle = local_forward.y.atan2(local_forward.x);
+            let orientation_to_player = (theta - ship_angle) % (2.0 * PI);
+
             if d.length() < MAX_SHOOT_DISTANCE
-                && theta.abs() < MAX_SHOOT_THETA
+                && orientation_to_player.abs() < MAX_SHOOT_THETA
                 && laser_ability.ready()
             {
                 let laser_angle = local_forward.y.atan2(local_forward.x);
@@ -55,11 +57,47 @@ pub fn update(
                 laser_ability.last_shot = Some(Instant::now());
                 linear_impulse.x -= LASER_KNOCKBACK_IMPULSE;
             }
-            if (theta - ship_angle).abs() < MAX_DRIVE_THETA {
+            if orientation_to_player.abs() < MAX_DRIVE_THETA {
                 linear_impulse.x += DRIVE_ENGINE_IMPULSE;
             }
 
-            angular_impulse += (theta - ship_angle).signum() * DRIVE_ENGINE_IMPULSE * ROTATION_MUL;
+            // Let's make the aliens dumb. But not TOO dumb.
+            let time_to_oriented_s = orientation_to_player / v.angvel;
+
+            debug!("d theta: {}", theta);
+            debug!("Ship angle: {}", ship_angle);
+            debug!("Orientation to player: {}", orientation_to_player);
+            debug!("Time to oriented (s): {}", time_to_oriented_s);
+
+            let torque_sign = if v.angvel > PI * 2.0 * 2.0 {
+                // If we're spinning at more than 2 rotations per second, just stabilize.
+                -v.angvel.signum()
+            } else {
+                // Otherwise, control rotation to aim at the player.
+                // This is the same principle as a PID control loop except we don't apply its perfect maths.
+                // If we did, the aliens would crush the player with perfect driving.
+                // Instead, we approximate an incompetent driver behavior.
+                if time_to_oriented_s >= 0.5 {
+                    // If it'll take more than 0.5s to align with the player at this rate, we'll rotate towards it.
+                    debug!("Rotating towards player");
+                    orientation_to_player.signum()
+                } else if time_to_oriented_s >= 0.25 {
+                    // We let it rotate.
+                    debug!("Letting it rotate");
+                    0.0
+                } else if time_to_oriented_s >= 0.0 {
+                    // When we'll reach the desired orientation under 0.25s, we brake.
+                    debug!("Braking");
+                    -orientation_to_player.signum()
+                } else {
+                    // We're rotating in the wrong direction and my trigonometry is terrible. Just rotate towards the player.
+                    orientation_to_player.signum()
+                }
+            };
+
+            debug!("");
+
+            angular_impulse += torque_sign * DRIVE_ENGINE_IMPULSE * ROTATION_MUL;
 
             commands.entity(entity).insert(ExternalImpulse {
                 impulse: local_forward.rotate(linear_impulse),

@@ -15,7 +15,7 @@ use crate::{
     player::PlayerMarker,
 };
 
-const WAVE_DURATION_S: f32 = 10.0;
+const WAVE_DURATION_S: f32 = 60.0;
 
 #[derive(Resource)]
 pub struct AlienWave {
@@ -41,12 +41,12 @@ pub fn update(
         let spawn_wave = wave.started_at.is_none()
             || wave.started_at.unwrap().elapsed().as_secs_f32() >= WAVE_DURATION_S;
         if spawn_wave {
-            let n_to_spawn = 2_u32.pow(wave.current_wave);
+            let n_to_spawn = 2_u32.pow(wave.current_wave - 1);
             wave.current_wave += 1;
             wave.started_at = Some(Instant::now());
             // Spawn at random locations around player for now
             for _ in 0..n_to_spawn {
-                let r = rng.gen::<f32>() * 500.0 + 500.0;
+                let r = rng.gen::<f32>() * 250.0 + 250.0;
                 let theta = rng.gen::<f32>() * 2.0 * PI;
                 let pos = Vec3::new(
                     player_t.translation.x + theta.cos() * r,

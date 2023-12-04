@@ -8,10 +8,10 @@ use bevy_rapier2d::{
 
 use crate::lasers::{self, LaserAbility};
 
-const DRIVE_ENGINE_IMPULSE: f32 = 2.0;
-const BRAKE_ENGINE_IMPULSE: f32 = 1.0;
+const DRIVE_ENGINE_IMPULSE: f32 = 4.0;
+const BRAKE_ENGINE_IMPULSE: f32 = 2.0;
 const LASER_KNOCKBACK_IMPULSE: f32 = 10.0;
-const ROTATION_MUL: f32 = 15.0;
+const ROTATION_MUL: f32 = 8.0;
 
 const LASER_COOLDOWN_S: f32 = 0.1;
 
