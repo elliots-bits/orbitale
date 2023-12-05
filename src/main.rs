@@ -2,6 +2,8 @@ mod alien_ship;
 mod alien_waves;
 mod background;
 mod camera;
+mod collisions_handler;
+mod despawn_queue;
 mod impulses_aggregator;
 mod lasers;
 mod player;
@@ -46,6 +48,7 @@ fn main() {
             lasers::update,
             alien_waves::update,
             alien_ship::update,
+            collisions_handler::update,
         )
             .in_set(AppStage::Simulation),
     );
@@ -54,6 +57,7 @@ fn main() {
         (camera::update, lasers::draw, background::update).in_set(AppStage::Draw),
     );
     impulses_aggregator::setup(&mut app);
+    despawn_queue::setup(&mut app);
     system_sets::setup(&mut app);
     app.run();
 }

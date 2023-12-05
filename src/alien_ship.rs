@@ -50,8 +50,8 @@ pub fn update(
                 let laser_angle = local_forward.y.atan2(local_forward.x);
                 lasers::spawn(
                     &mut commands,
-                    t.translation.xy() + t.up().xy().normalize() * 32.0,
-                    local_forward.rotate(Vec2 { x: 1000.0, y: 0.0 }) + v.linvel,
+                    t.translation.xy() + t.up().xy().normalize() * 40.0,
+                    local_forward.rotate(Vec2 { x: 1500.0, y: 0.0 }) + v.linvel,
                     laser_angle,
                     lasers::LaserOrigin::Enemy,
                 );

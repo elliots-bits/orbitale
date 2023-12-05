@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::{
     dynamics::{Ccd, Damping, RigidBody, Velocity},
-    geometry::{Collider, ColliderMassProperties},
+    geometry::{ActiveEvents, Collider, ColliderMassProperties},
 };
 use rand::prelude::*;
 use std::{
@@ -74,6 +74,7 @@ pub fn update(
                         angular_damping: 0.5,
                     },
                     Velocity::default(),
+                    ActiveEvents::COLLISION_EVENTS,
                 ));
                 wave.current_wave += 1;
                 wave.started_at = Some(Instant::now());

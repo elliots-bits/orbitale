@@ -1,14 +1,13 @@
-use std::{
-    f32::consts::PI,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 use bevy::prelude::*;
 use bevy_rapier2d::{
     dynamics::{Ccd, RigidBody, Velocity},
-    geometry::{Collider, ColliderMassProperties},
+    geometry::{ActiveEvents, Collider},
 };
 use bevy_vector_shapes::{painter::ShapePainter, shapes::RectPainter};
+
+use crate::despawn_queue::DespawnQueue;
 
 pub const LASER_LIFETIME_S: f32 = 2.0;
 
@@ -24,6 +23,7 @@ impl LaserAbility {
     }
 }
 
+#[derive(PartialEq, Eq)]
 pub enum LaserOrigin {
     Player,
     Enemy,
@@ -35,10 +35,10 @@ pub struct Laser {
     pub shot_at: Instant,
 }
 
-pub fn update(mut commands: Commands, query: Query<(Entity, &Laser)>) {
+pub fn update(mut despawn_queue: ResMut<DespawnQueue>, query: Query<(Entity, &Laser)>) {
     for (entity, Laser { shot_at, .. }) in query.iter() {
         if shot_at.elapsed().as_secs_f32() > LASER_LIFETIME_S {
-            commands.entity(entity).despawn_recursive();
+            despawn_queue.1.insert(entity);
         }
     }
 }
@@ -79,8 +79,8 @@ pub fn spawn(
         TransformBundle::from_transform(transform),
         RigidBody::KinematicVelocityBased,
         Ccd::enabled(),
-        ColliderMassProperties::Mass(0.001),
         Collider::ball(2.0),
         Velocity::linear(velocity),
+        ActiveEvents::COLLISION_EVENTS,
     ));
 }

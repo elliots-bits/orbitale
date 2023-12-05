@@ -26,7 +26,7 @@ pub fn update(
     mut commands: Commands,
     mut background: ResMut<ParralaxBackground>,
     camera: Query<(&Transform, &OrthographicProjection), With<GameCameraMarker>>,
-    tiles: Query<Entity, With<BackgroundTileMarker>>,
+    _tiles: Query<Entity, With<BackgroundTileMarker>>,
 ) {
     if let Ok((cam_transform, cam_proj)) = camera.get_single() {
         let cam_pos = cam_transform.translation.xy();
@@ -64,7 +64,7 @@ pub fn update(
         }
         for &stack_index_to_load in visible_stacks_indices.difference(&loaded_stacks_indices) {
             // debug!("Loading background at {:?}", stack_index_to_load);
-            let ecmd = commands.spawn(SpriteBundle {
+            let _ecmd = commands.spawn(SpriteBundle {
                 texture: background.texture.clone(),
                 transform: Transform::from_translation(Vec3 {
                     x: (stack_index_to_load.0 * background.tilesize.0 as i32) as f32,

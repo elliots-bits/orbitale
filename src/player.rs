@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use bevy::prelude::*;
 use bevy_rapier2d::{
     dynamics::{Ccd, Damping, RigidBody, Velocity},
-    geometry::{Collider, ColliderMassProperties},
+    geometry::{ActiveEvents, Collider, ColliderMassProperties},
 };
 
 use crate::{
@@ -47,8 +47,8 @@ pub fn control(
             let laser_angle = local_forward.y.atan2(local_forward.x);
             lasers::spawn(
                 &mut commands,
-                transform.translation.xy() + transform.up().xy().normalize() * 32.0,
-                Vec2 { x: 2000.0, y: 0.0 }.rotate(local_forward) + velocity.linvel,
+                transform.translation.xy() + transform.up().xy().normalize() * 40.0,
+                Vec2 { x: 4000.0, y: 0.0 }.rotate(local_forward) + velocity.linvel,
                 laser_angle,
                 lasers::LaserOrigin::Player,
             );
@@ -84,5 +84,6 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             angular_damping: 2.0,
         },
         Velocity::default(),
+        ActiveEvents::COLLISION_EVENTS,
     ));
 }
