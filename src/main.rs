@@ -9,6 +9,7 @@ mod lasers;
 mod player;
 mod system_sets;
 mod thruster;
+mod ui;
 
 use bevy::{log::LogPlugin, prelude::*};
 use bevy_rapier2d::plugin::{NoUserData, RapierConfiguration, RapierPhysicsPlugin, TimestepMode};
@@ -52,7 +53,7 @@ fn main() {
     );
     app.add_systems(
         Update,
-        (camera::update, lasers::draw, background::update).in_set(AppStage::Draw),
+        (camera::update, lasers::draw, background::update, ui::draw).in_set(AppStage::Draw),
     );
     impulses_aggregator::setup(&mut app);
     despawn_queue::setup(&mut app);

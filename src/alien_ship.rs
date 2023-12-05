@@ -5,7 +5,7 @@ use bevy_rapier2d::dynamics::Velocity;
 
 use crate::{
     impulses_aggregator::AddExternalImpulse,
-    lasers::{self, LaserAbility},
+    lasers::{self, Laser, LaserAbility, LaserOrigin},
     player::PlayerMarker,
 };
 
@@ -50,12 +50,15 @@ pub fn update(
             {
                 let laser_angle = local_forward.y.atan2(local_forward.x);
                 lasers::spawn(
-                    &time,
                     &mut commands,
                     t.translation.xy() + t.up().xy().normalize() * 40.0,
                     local_forward.rotate(Vec2 { x: 1500.0, y: 0.0 }) + v.linvel,
                     laser_angle,
-                    lasers::LaserOrigin::Enemy,
+                    Laser {
+                        origin: LaserOrigin::Enemy,
+                        damage: 10.0,
+                        shot_at: time.elapsed_seconds(),
+                    },
                 );
                 laser_ability.last_shot = Some(time.elapsed_seconds());
                 linear_impulse.x -= LASER_KNOCKBACK_IMPULSE;

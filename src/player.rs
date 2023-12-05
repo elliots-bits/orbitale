@@ -5,8 +5,9 @@ use bevy_rapier2d::{
 };
 
 use crate::{
+    camera::game_layer,
     impulses_aggregator::AddExternalImpulse,
-    lasers::{self, LaserAbility},
+    lasers::{self, Laser, LaserAbility, LaserOrigin},
     thruster::Thruster,
 };
 
@@ -16,8 +17,22 @@ const ROTATION_MUL: f32 = 8.0;
 
 const LASER_COOLDOWN_S: f32 = 0.025;
 
+const STARTING_HP: f32 = 100.0;
+
 #[derive(Component)]
 pub struct PlayerMarker;
+
+#[derive(Component)]
+pub struct PlayerHP {
+    pub max: f32,
+    pub current: f32,
+}
+
+impl PlayerHP {
+    pub fn decrease(&mut self, amount: f32) {
+        self.current = (self.current - amount).max(0.0);
+    }
+}
 
 pub fn control(
     mut commands: Commands,
@@ -55,12 +70,15 @@ pub fn control(
         if keys.pressed(KeyCode::Space) && laser_ability.ready(&time) {
             let laser_angle = local_forward.y.atan2(local_forward.x);
             lasers::spawn(
-                &time,
                 &mut commands,
                 transform.translation.xy() + transform.up().xy().normalize() * 40.0,
                 Vec2 { x: 4000.0, y: 0.0 }.rotate(local_forward) + velocity.linvel,
                 laser_angle,
-                lasers::LaserOrigin::Player,
+                Laser {
+                    origin: LaserOrigin::Player,
+                    damage: 100.0,
+                    shot_at: time.elapsed_seconds(),
+                },
             );
             laser_ability.last_shot = Some(time.elapsed_seconds());
             linear_impulse.x -= LASER_KNOCKBACK_IMPULSE;
@@ -77,6 +95,10 @@ pub fn control(
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         PlayerMarker,
+        PlayerHP {
+            max: STARTING_HP,
+            current: STARTING_HP,
+        },
         Thruster {
             max_thrust: 8.0,
             current_thrust: 0.0,
@@ -102,5 +124,6 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         Velocity::default(),
         ActiveEvents::COLLISION_EVENTS,
+        game_layer(),
     ));
 }

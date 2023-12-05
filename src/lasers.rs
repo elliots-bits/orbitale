@@ -5,7 +5,7 @@ use bevy_rapier2d::{
 };
 use bevy_vector_shapes::{painter::ShapePainter, shapes::RectPainter};
 
-use crate::despawn_queue::DespawnQueue;
+use crate::{camera::game_layer, despawn_queue::DespawnQueue};
 
 pub const LASER_LIFETIME_S: f32 = 2.0;
 
@@ -31,6 +31,7 @@ pub enum LaserOrigin {
 #[derive(Component)]
 pub struct Laser {
     pub origin: LaserOrigin,
+    pub damage: f32,
     pub shot_at: f32,
 }
 
@@ -61,14 +62,7 @@ pub fn draw(query: Query<(&Transform, &Laser)>, mut painter: ShapePainter) {
     }
 }
 
-pub fn spawn(
-    time: &Time,
-    commands: &mut Commands,
-    position: Vec2,
-    velocity: Vec2,
-    angle: f32,
-    origin: LaserOrigin,
-) {
+pub fn spawn(commands: &mut Commands, position: Vec2, velocity: Vec2, angle: f32, props: Laser) {
     let mut transform = Transform::from_translation(Vec3 {
         x: position.x,
         y: position.y,
@@ -76,15 +70,13 @@ pub fn spawn(
     });
     transform.rotate_axis(Vec3::Z, angle);
     commands.spawn((
-        Laser {
-            origin,
-            shot_at: time.elapsed_seconds(),
-        },
+        props,
         TransformBundle::from_transform(transform),
         RigidBody::KinematicVelocityBased,
         Ccd::enabled(),
         Collider::ball(2.0),
         Velocity::linear(velocity),
         ActiveEvents::COLLISION_EVENTS,
+        game_layer(),
     ));
 }

@@ -5,14 +5,14 @@ use crate::{
     alien_ship::AlienShipMarker,
     despawn_queue::DespawnQueue,
     lasers::{Laser, LaserOrigin},
-    player::PlayerMarker,
+    player::{PlayerHP, PlayerMarker},
 };
 
 pub fn update(
     mut _commands: Commands,
     mut despawn_queue: ResMut<DespawnQueue>,
     mut collisions: EventReader<CollisionEvent>,
-    player: Query<Entity, With<PlayerMarker>>,
+    mut player: Query<&mut PlayerHP, With<PlayerMarker>>,
     lasers: Query<(Entity, &Laser)>,
     alien_ships: Query<Entity, With<AlienShipMarker>>,
 ) {
@@ -21,10 +21,10 @@ pub fn update(
             // debug!("Collision detected between {:?} and {:?}", a, b);
 
             // Check for an alien laser hitting the player
-            if let Some((player, (laser_entity, laser))) =
-                if let (Ok(p), Ok(l)) = (player.get(a), lasers.get(b)) {
+            if let Some((mut player_hp, (laser_entity, laser))) =
+                if let (Ok(p), Ok(l)) = (player.get_mut(a), lasers.get(b)) {
                     Some((p, l))
-                } else if let (Ok(p), Ok(l)) = (player.get(b), lasers.get(a)) {
+                } else if let (Ok(p), Ok(l)) = (player.get_mut(b), lasers.get(a)) {
                     Some((p, l))
                 } else {
                     None
@@ -33,6 +33,7 @@ pub fn update(
                 if laser.origin == LaserOrigin::Enemy {
                     // debug!("Player's been hit by enemy");
                     despawn_queue.1.insert(laser_entity);
+                    player_hp.decrease(laser.damage);
                 }
             }
 
@@ -52,7 +53,7 @@ pub fn update(
             }
 
             // Check for player ship hitting alien ship
-            if let Some((alien_ship, player_ship)) =
+            if let Some((alien_ship, _)) =
                 if let (Ok(s), Ok(p)) = (alien_ships.get(a), player.get(b)) {
                     Some((s, p))
                 } else if let (Ok(s), Ok(p)) = (alien_ships.get(b), player.get(a)) {

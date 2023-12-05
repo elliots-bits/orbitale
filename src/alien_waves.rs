@@ -8,6 +8,7 @@ use std::f32::consts::PI;
 
 use crate::{
     alien_ship::{AlienShipMarker, ALIEN_SHIP_LASER_COOLDOWN_S},
+    camera::game_layer,
     lasers::LaserAbility,
     player::PlayerMarker,
 };
@@ -74,6 +75,7 @@ pub fn update(
                     },
                     Velocity::default(),
                     ActiveEvents::COLLISION_EVENTS,
+                    game_layer(),
                 ));
             }
             wave.current_wave += 1;
