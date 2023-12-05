@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::pipeline::CollisionEvent;
 
 use crate::{
-    alien_ship::AlienShipMarker,
+    alien_ship::{self, AlienShipMarker},
     despawn_queue::DespawnQueue,
     lasers::{Laser, LaserOrigin},
     player::PlayerMarker,
@@ -18,7 +18,7 @@ pub fn update(
 ) {
     for event in collisions.read() {
         if let &CollisionEvent::Started(a, b, _) = event {
-            debug!("Collision detected between {:?} and {:?}", a, b);
+            // debug!("Collision detected between {:?} and {:?}", a, b);
 
             // Check for an alien laser hitting the player
             if let Some((player, (laser_entity, laser))) =
@@ -31,7 +31,7 @@ pub fn update(
                 }
             {
                 if laser.origin == LaserOrigin::Enemy {
-                    debug!("Player's been hit by enemy");
+                    // debug!("Player's been hit by enemy");
                     despawn_queue.1.insert(laser_entity);
                 }
             }
@@ -46,9 +46,30 @@ pub fn update(
                     None
                 }
             {
-                debug!("An alien ship has been hit");
+                // debug!("An alien ship has been hit");
                 despawn_queue.1.insert(laser_entity);
                 despawn_queue.1.insert(alien_ship);
+            }
+
+            // Check for player ship hitting alien ship
+            if let Some((alien_ship, player_ship)) =
+                if let (Ok(s), Ok(p)) = (alien_ships.get(a), player.get(b)) {
+                    Some((s, p))
+                } else if let (Ok(s), Ok(p)) = (alien_ships.get(b), player.get(a)) {
+                    Some((s, p))
+                } else {
+                    None
+                }
+            {
+                // debug!("The player has crashed into an alien ship");
+                despawn_queue.1.insert(alien_ship);
+            }
+
+            // Check for alien ship hitting alien ship
+            if let (Ok(a1), Ok(a2)) = (alien_ships.get(a), alien_ships.get(b)) {
+                // debug!("Two alien ships crashed into each other");
+                despawn_queue.1.insert(a1);
+                despawn_queue.1.insert(a2);
             }
         }
     }

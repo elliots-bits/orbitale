@@ -16,7 +16,7 @@ use crate::{
 };
 use rand::distributions::Uniform;
 
-const WAVE_DURATION_S: f32 = 30.0;
+const WAVE_DURATION_S: f32 = 10.0;
 
 #[derive(Resource)]
 pub struct AlienWave {
@@ -44,7 +44,8 @@ pub fn update(
         if spawn_wave {
             let angle_side = Uniform::new(0.0, PI * 2.0);
             let radius_side = Uniform::new(1000.0, 2000.0);
-            let n_to_spawn = wave.current_wave * 2;
+            let n_to_spawn = wave.current_wave * 5;
+            debug!("Spawning {} alien ships", n_to_spawn);
             // Spawn at random locations around player for now
             for _ in 0..n_to_spawn {
                 let r = rng.sample(radius_side);
@@ -76,9 +77,9 @@ pub fn update(
                     Velocity::default(),
                     ActiveEvents::COLLISION_EVENTS,
                 ));
-                wave.current_wave += 1;
-                wave.started_at = Some(Instant::now());
             }
+            wave.current_wave += 1;
+            wave.started_at = Some(Instant::now());
         }
     }
 }
