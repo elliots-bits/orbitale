@@ -7,6 +7,10 @@ use bevy::{
         view::{Layer, RenderLayers},
     },
 };
+use bevy_parallax::{
+    CreateParallaxEvent, LayerData, LayerRepeat, LayerSpeed, ParallaxCameraComponent,
+    ParallaxMoveEvent, ParallaxPlugin, ParallaxSystems, RepeatStrategy,
+};
 use bevy_rapier2d::dynamics::Velocity;
 
 use crate::player::PlayerMarker;
@@ -20,8 +24,17 @@ pub struct GameCameraMarker;
 #[derive(Component)]
 pub struct UICameraMarker;
 
-pub fn setup(mut commands: Commands) {
-    commands.spawn((
+pub fn setup(app: &mut App) {
+    app.add_plugins(ParallaxPlugin);
+    app.add_systems(Startup, initialize_camera);
+    app.add_systems(Update, update_camera.before(ParallaxSystems));
+}
+
+fn initialize_camera(
+    mut commands: Commands,
+    mut create_parallax: EventWriter<CreateParallaxEvent>,
+) {
+    let camera = commands.spawn((
         Camera2dBundle {
             camera: Camera {
                 order: 0,
@@ -39,7 +52,46 @@ pub fn setup(mut commands: Commands) {
         },
         RenderLayers::layer(GAME_LAYER),
         GameCameraMarker,
+        ParallaxCameraComponent::default(),
     ));
+    create_parallax.send(CreateParallaxEvent {
+        layers_data: vec![
+            LayerData {
+                speed: LayerSpeed::Bidirectional(0.5, 0.5),
+                repeat: LayerRepeat::Bidirectional(RepeatStrategy::Same, RepeatStrategy::Same),
+                path: "stars_light.png".to_string(),
+                tile_size: Vec2::new(1000.0, 1000.0),
+                cols: 1,
+                rows: 1,
+                scale: 8.0,
+                z: -1.0,
+                ..Default::default()
+            },
+            LayerData {
+                speed: LayerSpeed::Bidirectional(0.0, 0.0),
+                repeat: LayerRepeat::Bidirectional(RepeatStrategy::Same, RepeatStrategy::Same),
+                path: "stars_light.png".to_string(),
+                tile_size: Vec2::new(1000.0, 1000.0),
+                cols: 1,
+                rows: 1,
+                scale: 8.0,
+                z: -1.0,
+                ..Default::default()
+            },
+            LayerData {
+                speed: LayerSpeed::Bidirectional(1.0, 1.0),
+                repeat: LayerRepeat::Bidirectional(RepeatStrategy::Same, RepeatStrategy::Same),
+                path: "nasa_milky_way.png".to_string(),
+                tile_size: Vec2::new(9725.0, 4862.0),
+                cols: 1,
+                rows: 1,
+                scale: 1.0,
+                z: -2.0,
+                ..Default::default()
+            },
+        ],
+        camera: camera.id(),
+    });
     commands.spawn((
         Camera2dBundle {
             camera: Camera {
@@ -60,16 +112,22 @@ pub fn setup(mut commands: Commands) {
     ));
 }
 
-pub fn update(
+fn update_camera(
     mut camera: Query<
-        (&mut Transform, &mut OrthographicProjection),
+        (Entity, &Transform, &mut OrthographicProjection),
         (With<GameCameraMarker>, Without<PlayerMarker>),
     >,
     player: Query<(&Transform, &Velocity), With<PlayerMarker>>,
+    mut move_event_writer: EventWriter<ParallaxMoveEvent>,
 ) {
-    if let Ok((mut cam_t, mut proj)) = camera.get_single_mut() {
+    if let Ok((camera_entity, cam_t, mut proj)) = camera.get_single_mut() {
         if let Ok((player_t, player_v)) = player.get_single() {
-            cam_t.translation = player_t.translation;
+            move_event_writer.send(ParallaxMoveEvent {
+                camera_move_speed: (player_t.translation - cam_t.translation).xy(),
+                camera: camera_entity,
+            });
+
+            // cam_t.translation = player_t.translation;
 
             let speed = player_v.linvel.length();
             let target_scale = (((speed / 600.0 - 1.0).tanh() + 1.0) / 2.0).powf(2.0) * 2.0 + 2.0;

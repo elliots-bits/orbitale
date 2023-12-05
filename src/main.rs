@@ -1,6 +1,5 @@
 mod alien_ship;
 mod alien_waves;
-mod background;
 mod camera;
 mod collisions_handler;
 mod despawn_queue;
@@ -24,17 +23,7 @@ fn main() {
     }))
     .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(1.0))
     .add_plugins(ShapePlugin::default())
-    // .add_plugins(RapierDebugRenderPlugin::default())
-    .add_systems(
-        Startup,
-        (
-            camera::setup,
-            player::setup,
-            alien_waves::setup,
-            background::setup,
-            ui::setup,
-        ),
-    )
+    .add_systems(Startup, (ui::setup, player::setup, alien_waves::setup))
     .insert_resource(RapierConfiguration {
         gravity: Vec2::ZERO,
         timestep_mode: TimestepMode::Variable {
@@ -54,17 +43,11 @@ fn main() {
     );
     app.add_systems(
         Update,
-        (
-            camera::update,
-            lasers::draw,
-            background::update,
-            ui::draw_healthbar,
-            ui::draw_hud,
-        )
-            .in_set(AppStage::Draw),
+        (lasers::draw, ui::draw_healthbar, ui::draw_hud).in_set(AppStage::Draw),
     );
     impulses_aggregator::setup(&mut app);
     despawn_queue::setup(&mut app);
     system_sets::setup(&mut app);
+    camera::setup(&mut app);
     app.run();
 }
