@@ -1,5 +1,3 @@
-use std::time::{Duration, Instant};
-
 use bevy::prelude::*;
 use bevy_rapier2d::{
     dynamics::{Ccd, Damping, RigidBody, Velocity},
@@ -23,6 +21,7 @@ pub struct PlayerMarker;
 
 pub fn control(
     mut commands: Commands,
+    time: Res<Time>,
     mut impulses: EventWriter<AddExternalImpulse>,
     mut player: Query<(Entity, &mut LaserAbility, &Transform, &Velocity), With<PlayerMarker>>,
     keys: Res<Input<KeyCode>>,
@@ -43,16 +42,17 @@ pub fn control(
             angular_impulse += DRIVE_ENGINE_IMPULSE * ROTATION_MUL;
         }
         let local_forward = transform.up().xy();
-        if keys.pressed(KeyCode::Space) && laser_ability.ready() {
+        if keys.pressed(KeyCode::Space) && laser_ability.ready(&time) {
             let laser_angle = local_forward.y.atan2(local_forward.x);
             lasers::spawn(
+                &time,
                 &mut commands,
                 transform.translation.xy() + transform.up().xy().normalize() * 40.0,
                 Vec2 { x: 4000.0, y: 0.0 }.rotate(local_forward) + velocity.linvel,
                 laser_angle,
                 lasers::LaserOrigin::Player,
             );
-            laser_ability.last_shot = Some(Instant::now());
+            laser_ability.last_shot = Some(time.elapsed_seconds());
             linear_impulse.x -= LASER_KNOCKBACK_IMPULSE;
         }
 
@@ -69,7 +69,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         PlayerMarker,
         LaserAbility {
             last_shot: None,
-            cooldown: Duration::from_secs_f32(LASER_COOLDOWN_S),
+            cooldown: LASER_COOLDOWN_S,
         },
         SpriteBundle {
             texture: asset_server.load("spaceship_dev1.png"),

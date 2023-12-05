@@ -1,5 +1,3 @@
-use std::time::{Duration, Instant};
-
 use bevy::prelude::*;
 use bevy_rapier2d::{
     dynamics::{Ccd, RigidBody, Velocity},
@@ -13,13 +11,14 @@ pub const LASER_LIFETIME_S: f32 = 2.0;
 
 #[derive(Component)]
 pub struct LaserAbility {
-    pub last_shot: Option<Instant>,
-    pub cooldown: Duration,
+    pub last_shot: Option<f32>,
+    pub cooldown: f32,
 }
 
 impl LaserAbility {
-    pub fn ready(&self) -> bool {
-        self.last_shot.is_none() || self.last_shot.unwrap().elapsed() >= self.cooldown
+    pub fn ready(&self, time: &Time) -> bool {
+        self.last_shot.is_none()
+            || time.elapsed_seconds() - self.last_shot.unwrap() >= self.cooldown
     }
 }
 
@@ -32,12 +31,16 @@ pub enum LaserOrigin {
 #[derive(Component)]
 pub struct Laser {
     pub origin: LaserOrigin,
-    pub shot_at: Instant,
+    pub shot_at: f32,
 }
 
-pub fn update(mut despawn_queue: ResMut<DespawnQueue>, query: Query<(Entity, &Laser)>) {
+pub fn update(
+    mut despawn_queue: ResMut<DespawnQueue>,
+    time: Res<Time>,
+    query: Query<(Entity, &Laser)>,
+) {
     for (entity, Laser { shot_at, .. }) in query.iter() {
-        if shot_at.elapsed().as_secs_f32() > LASER_LIFETIME_S {
+        if time.elapsed_seconds() - shot_at > LASER_LIFETIME_S {
             despawn_queue.1.insert(entity);
         }
     }
@@ -59,6 +62,7 @@ pub fn draw(query: Query<(&Transform, &Laser)>, mut painter: ShapePainter) {
 }
 
 pub fn spawn(
+    time: &Time,
     commands: &mut Commands,
     position: Vec2,
     velocity: Vec2,
@@ -74,7 +78,7 @@ pub fn spawn(
     commands.spawn((
         Laser {
             origin,
-            shot_at: Instant::now(),
+            shot_at: time.elapsed_seconds(),
         },
         TransformBundle::from_transform(transform),
         RigidBody::KinematicVelocityBased,

@@ -1,4 +1,4 @@
-use std::{f32::consts::PI, time::Instant};
+use std::f32::consts::PI;
 
 use bevy::prelude::*;
 use bevy_rapier2d::dynamics::Velocity;
@@ -25,6 +25,7 @@ pub struct AlienShipMarker;
 
 pub fn update(
     mut commands: Commands,
+    time: Res<Time>,
     mut impulses: EventWriter<AddExternalImpulse>,
     player: Query<&Transform, With<PlayerMarker>>,
     mut query: Query<(Entity, &Transform, &Velocity, &mut LaserAbility), With<AlienShipMarker>>,
@@ -45,17 +46,18 @@ pub fn update(
 
             if d.length() < MAX_SHOOT_DISTANCE
                 && orientation_to_player.abs() < MAX_SHOOT_THETA
-                && laser_ability.ready()
+                && laser_ability.ready(&time)
             {
                 let laser_angle = local_forward.y.atan2(local_forward.x);
                 lasers::spawn(
+                    &time,
                     &mut commands,
                     t.translation.xy() + t.up().xy().normalize() * 40.0,
                     local_forward.rotate(Vec2 { x: 1500.0, y: 0.0 }) + v.linvel,
                     laser_angle,
                     lasers::LaserOrigin::Enemy,
                 );
-                laser_ability.last_shot = Some(Instant::now());
+                laser_ability.last_shot = Some(time.elapsed_seconds());
                 linear_impulse.x -= LASER_KNOCKBACK_IMPULSE;
             }
             if orientation_to_player.abs() < MAX_DRIVE_THETA {

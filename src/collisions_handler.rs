@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::pipeline::CollisionEvent;
 
 use crate::{
-    alien_ship::{self, AlienShipMarker},
+    alien_ship::AlienShipMarker,
     despawn_queue::DespawnQueue,
     lasers::{Laser, LaserOrigin},
     player::PlayerMarker,
@@ -65,12 +65,12 @@ pub fn update(
                 despawn_queue.1.insert(alien_ship);
             }
 
-            // Check for alien ship hitting alien ship
-            if let (Ok(a1), Ok(a2)) = (alien_ships.get(a), alien_ships.get(b)) {
-                // debug!("Two alien ships crashed into each other");
-                despawn_queue.1.insert(a1);
-                despawn_queue.1.insert(a2);
-            }
+            // // Check for alien ship hitting alien ship
+            // if let (Ok(a1), Ok(a2)) = (alien_ships.get(a), alien_ships.get(b)) {
+            //     // debug!("Two alien ships crashed into each other");
+            //     despawn_queue.1.insert(a1);
+            //     despawn_queue.1.insert(a2);
+            // }
         }
     }
 }

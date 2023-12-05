@@ -4,10 +4,7 @@ use bevy_rapier2d::{
     geometry::{ActiveEvents, Collider, ColliderMassProperties},
 };
 use rand::prelude::*;
-use std::{
-    f32::consts::PI,
-    time::{Duration, Instant},
-};
+use std::f32::consts::PI;
 
 use crate::{
     alien_ship::{AlienShipMarker, ALIEN_SHIP_LASER_COOLDOWN_S},
@@ -21,7 +18,7 @@ const WAVE_DURATION_S: f32 = 10.0;
 #[derive(Resource)]
 pub struct AlienWave {
     pub current_wave: u32,
-    pub started_at: Option<Instant>,
+    pub started_at: Option<f32>,
 }
 
 pub fn setup(mut commands: Commands) {
@@ -33,6 +30,7 @@ pub fn setup(mut commands: Commands) {
 
 pub fn update(
     mut commands: Commands,
+    time: Res<Time>,
     asset_server: Res<AssetServer>,
     player: Query<&Transform, With<PlayerMarker>>,
     mut wave: ResMut<AlienWave>,
@@ -40,7 +38,7 @@ pub fn update(
     if let Ok(player_t) = player.get_single() {
         let mut rng = rand::thread_rng();
         let spawn_wave = wave.started_at.is_none()
-            || wave.started_at.unwrap().elapsed().as_secs_f32() >= WAVE_DURATION_S;
+            || time.elapsed_seconds() - wave.started_at.unwrap() >= WAVE_DURATION_S;
         if spawn_wave {
             let angle_side = Uniform::new(0.0, PI * 2.0);
             let radius_side = Uniform::new(1000.0, 2000.0);
@@ -59,7 +57,7 @@ pub fn update(
                     AlienShipMarker,
                     LaserAbility {
                         last_shot: None,
-                        cooldown: Duration::from_secs_f32(ALIEN_SHIP_LASER_COOLDOWN_S),
+                        cooldown: ALIEN_SHIP_LASER_COOLDOWN_S,
                     },
                     SpriteBundle {
                         texture: asset_server.load("spaceship_dev1.png"),
@@ -79,7 +77,7 @@ pub fn update(
                 ));
             }
             wave.current_wave += 1;
-            wave.started_at = Some(Instant::now());
+            wave.started_at = Some(time.elapsed_seconds());
         }
     }
 }
