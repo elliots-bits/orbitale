@@ -2,11 +2,14 @@ use std::time::{Duration, Instant};
 
 use bevy::prelude::*;
 use bevy_rapier2d::{
-    dynamics::{Ccd, Damping, ExternalImpulse, RigidBody, Velocity},
+    dynamics::{Ccd, Damping, RigidBody, Velocity},
     geometry::{Collider, ColliderMassProperties},
 };
 
-use crate::lasers::{self, LaserAbility};
+use crate::{
+    impulses_aggregator::AddExternalImpulse,
+    lasers::{self, LaserAbility},
+};
 
 const DRIVE_ENGINE_IMPULSE: f32 = 6.0;
 const BRAKE_ENGINE_IMPULSE: f32 = 2.0;
@@ -20,23 +23,24 @@ pub struct PlayerMarker;
 
 pub fn control(
     mut commands: Commands,
+    mut impulses: EventWriter<AddExternalImpulse>,
     mut player: Query<(Entity, &mut LaserAbility, &Transform, &Velocity), With<PlayerMarker>>,
     keys: Res<Input<KeyCode>>,
 ) {
     if let Ok((entity, mut laser_ability, transform, velocity)) = player.get_single_mut() {
-        let mut linear = Vec2::ZERO;
-        let mut angular = 0.0;
+        let mut linear_impulse = Vec2::ZERO;
+        let mut angular_impulse = 0.0;
         if keys.pressed(KeyCode::Up) {
-            linear.x += DRIVE_ENGINE_IMPULSE;
+            linear_impulse.x += DRIVE_ENGINE_IMPULSE;
         }
         if keys.pressed(KeyCode::Down) {
-            linear.x -= BRAKE_ENGINE_IMPULSE;
+            linear_impulse.x -= BRAKE_ENGINE_IMPULSE;
         }
         if keys.pressed(KeyCode::Right) {
-            angular -= DRIVE_ENGINE_IMPULSE * ROTATION_MUL;
+            angular_impulse -= DRIVE_ENGINE_IMPULSE * ROTATION_MUL;
         }
         if keys.pressed(KeyCode::Left) {
-            angular += DRIVE_ENGINE_IMPULSE * ROTATION_MUL;
+            angular_impulse += DRIVE_ENGINE_IMPULSE * ROTATION_MUL;
         }
         let local_forward = transform.up().xy();
         if keys.pressed(KeyCode::Space) && laser_ability.ready() {
@@ -49,12 +53,13 @@ pub fn control(
                 lasers::LaserOrigin::Player,
             );
             laser_ability.last_shot = Some(Instant::now());
-            linear.x -= LASER_KNOCKBACK_IMPULSE;
+            linear_impulse.x -= LASER_KNOCKBACK_IMPULSE;
         }
 
-        commands.entity(entity).insert(ExternalImpulse {
-            impulse: local_forward.rotate(linear),
-            torque_impulse: angular,
+        impulses.send(AddExternalImpulse {
+            entity,
+            impulse: local_forward.rotate(linear_impulse),
+            torque_impulse: angular_impulse,
         });
     }
 }

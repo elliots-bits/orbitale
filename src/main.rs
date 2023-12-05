@@ -2,51 +2,58 @@ mod alien_ship;
 mod alien_waves;
 mod background;
 mod camera;
+mod impulses_aggregator;
 mod lasers;
 mod player;
+mod system_sets;
 
 use bevy::{log::LogPlugin, prelude::*};
 use bevy_rapier2d::plugin::{NoUserData, RapierConfiguration, RapierPhysicsPlugin, TimestepMode};
 use bevy_vector_shapes::ShapePlugin;
+use system_sets::AppStage;
 
 fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins.set(LogPlugin {
-            filter: "info,wgpu_core=error,wgpu_hal=error,space_chase=debug".into(),
-            level: bevy::log::Level::DEBUG,
-        }))
-        .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(1.0))
-        .add_plugins(ShapePlugin::default())
-        // .add_plugins(RapierDebugRenderPlugin::default())
-        .add_systems(
-            Startup,
-            (
-                camera::setup,
-                player::setup,
-                alien_waves::setup,
-                background::setup,
-            ),
+    let mut app = App::new();
+    app.add_plugins(DefaultPlugins.set(LogPlugin {
+        filter: "info,wgpu_core=error,wgpu_hal=error,space_chase=debug".into(),
+        level: bevy::log::Level::DEBUG,
+    }))
+    .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(1.0))
+    .add_plugins(ShapePlugin::default())
+    // .add_plugins(RapierDebugRenderPlugin::default())
+    .add_systems(
+        Startup,
+        (
+            camera::setup,
+            player::setup,
+            alien_waves::setup,
+            background::setup,
+        ),
+    )
+    .insert_resource(RapierConfiguration {
+        gravity: Vec2::ZERO,
+        timestep_mode: TimestepMode::Variable {
+            max_dt: 1.0 / 60.0,
+            time_scale: 1.0,
+            substeps: 2,
+        },
+        ..default()
+    });
+    app.add_systems(
+        Update,
+        (
+            player::control,
+            lasers::update,
+            alien_waves::update,
+            alien_ship::update,
         )
-        .add_systems(
-            Update,
-            (
-                player::control,
-                lasers::update,
-                camera::update,
-                alien_waves::update,
-                alien_ship::update,
-                lasers::draw,
-                background::update,
-            ),
-        )
-        .insert_resource(RapierConfiguration {
-            gravity: Vec2::ZERO,
-            timestep_mode: TimestepMode::Variable {
-                max_dt: 1.0 / 60.0,
-                time_scale: 1.0,
-                substeps: 2,
-            },
-            ..default()
-        })
-        .run();
+            .in_set(AppStage::Simulation),
+    );
+    app.add_systems(
+        Update,
+        (camera::update, lasers::draw, background::update).in_set(AppStage::Draw),
+    );
+    impulses_aggregator::setup(&mut app);
+    system_sets::setup(&mut app);
+    app.run();
 }

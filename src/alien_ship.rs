@@ -1,9 +1,10 @@
 use std::{f32::consts::PI, time::Instant};
 
 use bevy::prelude::*;
-use bevy_rapier2d::dynamics::{ExternalImpulse, Velocity};
+use bevy_rapier2d::dynamics::Velocity;
 
 use crate::{
+    impulses_aggregator::AddExternalImpulse,
     lasers::{self, LaserAbility},
     player::PlayerMarker,
 };
@@ -24,6 +25,7 @@ pub struct AlienShipMarker;
 
 pub fn update(
     mut commands: Commands,
+    mut impulses: EventWriter<AddExternalImpulse>,
     player: Query<&Transform, With<PlayerMarker>>,
     mut query: Query<(Entity, &Transform, &Velocity, &mut LaserAbility), With<AlienShipMarker>>,
 ) {
@@ -89,8 +91,8 @@ pub fn update(
             };
 
             angular_impulse += torque_sign * DRIVE_ENGINE_IMPULSE * ROTATION_MUL;
-
-            commands.entity(entity).insert(ExternalImpulse {
+            impulses.send(AddExternalImpulse {
+                entity,
                 impulse: local_forward.rotate(linear_impulse),
                 torque_impulse: angular_impulse,
             });
