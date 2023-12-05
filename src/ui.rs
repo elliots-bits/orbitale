@@ -1,13 +1,10 @@
-use bevy::{
-    prelude::*,
-    render::view::{ColorGrading, RenderLayers},
-    window::PrimaryWindow,
-};
+use bevy::{prelude::*, render::view::RenderLayers, window::PrimaryWindow};
 use bevy_rapier2d::dynamics::Velocity;
 use bevy_vector_shapes::{
     painter::ShapePainter,
     shapes::{DiscPainter, RectPainter},
 };
+use colorgrad::CustomGradient;
 
 use crate::{
     alien_ship::AlienShipMarker,
@@ -25,7 +22,16 @@ const RADAR_COLOR_MAX_SPEED: f32 = 3000.0;
 pub struct RadarShipsColorGradient(pub colorgrad::Gradient);
 
 pub fn setup(mut commands: Commands) {
-    commands.insert_resource(RadarShipsColorGradient(colorgrad::turbo()));
+    commands.insert_resource(RadarShipsColorGradient(
+        CustomGradient::new()
+            .colors(&[
+                colorgrad::Color::new(0.0, 0.3, 1.0, 1.0),
+                colorgrad::Color::new(0.6, 0.6, 0.6, 1.0),
+                colorgrad::Color::new(1.0, 0.0, 0.0, 1.0),
+            ])
+            .build()
+            .unwrap(),
+    ));
 }
 
 pub fn draw_healthbar(
@@ -129,8 +135,7 @@ pub fn draw_hud(
                     painter.hollow = true;
 
                     let max_radar_range = RADAR_HUD_OUTER_RADIUS / RADAR_HUD_SCALE;
-                    let size =
-                        ((max_radar_range - r) / max_radar_range).clamp(0.0, 1.0) * 4.0 + 2.0;
+                    let size = ((max_radar_range - r) / max_radar_range).clamp(3.0, 6.0);
 
                     painter.thickness = (size / 4.0).clamp(0.0, 1.0);
                     painter.set_rotation(Quat::from_axis_angle(Vec3::Z, dv.y.atan2(dv.x)));
