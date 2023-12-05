@@ -32,6 +32,7 @@ fn main() {
             player::setup,
             alien_waves::setup,
             background::setup,
+            ui::setup,
         ),
     )
     .insert_resource(RapierConfiguration {

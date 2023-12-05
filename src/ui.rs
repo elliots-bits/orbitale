@@ -1,4 +1,8 @@
-use bevy::{prelude::*, render::view::RenderLayers, window::PrimaryWindow};
+use bevy::{
+    prelude::*,
+    render::view::{ColorGrading, RenderLayers},
+    window::PrimaryWindow,
+};
 use bevy_rapier2d::dynamics::Velocity;
 use bevy_vector_shapes::{
     painter::ShapePainter,
@@ -12,7 +16,17 @@ use crate::{
 };
 
 const BAR_SIZE: Vec2 = Vec2 { x: 300.0, y: 25.0 };
-const RADAR_HUD_RADIUS: f32 = 150.0;
+const RADAR_HUD_INNER_RADIUS: f32 = 100.0;
+const RADAR_HUD_OUTER_RADIUS: f32 = 400.0;
+const RADAR_HUD_SCALE: f32 = 1.0 / 40.0;
+const RADAR_COLOR_MAX_SPEED: f32 = 3000.0;
+
+#[derive(Resource)]
+pub struct RadarShipsColorGradient(pub colorgrad::Gradient);
+
+pub fn setup(mut commands: Commands) {
+    commands.insert_resource(RadarShipsColorGradient(colorgrad::turbo()));
+}
 
 pub fn draw_healthbar(
     mut painter: ShapePainter,
@@ -58,6 +72,7 @@ pub fn draw_healthbar(
 
 pub fn draw_hud(
     mut painter: ShapePainter,
+    ship_color_gradient: Res<RadarShipsColorGradient>,
     camera: Query<(&Transform, &OrthographicProjection), With<GameCameraMarker>>,
     player: Query<(&Transform, &Velocity), With<PlayerMarker>>,
     alien_ships: Query<(&Transform, &Velocity), With<AlienShipMarker>>,
@@ -74,7 +89,8 @@ pub fn draw_hud(
         };
         painter.hollow = true;
         painter.thickness = 1.0;
-        painter.circle(RADAR_HUD_RADIUS);
+        painter.circle(RADAR_HUD_INNER_RADIUS);
+        painter.circle(RADAR_HUD_OUTER_RADIUS);
 
         if let Ok((cam_transform, cam_proj)) = camera.get_single() {
             let cam_pos = cam_transform.translation.xy();
@@ -84,9 +100,41 @@ pub fn draw_hud(
                 max: cam_area.max + cam_pos,
             };
             for (at, av) in alien_ships.iter() {
-                if abs_cam_area.contains(at.translation.xy()) {
+                if !abs_cam_area.contains(at.translation.xy()) {
                     let dp = at.translation.xy() - pt.translation.xy();
                     let dv = av.linvel - pv.linvel;
+
+                    let (theta, r) = (dp.y.atan2(dp.x), dp.length());
+                    let radar_r =
+                        (r * RADAR_HUD_SCALE).clamp(RADAR_HUD_INNER_RADIUS, RADAR_HUD_OUTER_RADIUS);
+                    let ship_closing_speed = dv.length() * dv.normalize().dot(dp.normalize());
+
+                    let speed_color_interp = 1.0
+                        - ((ship_closing_speed + RADAR_COLOR_MAX_SPEED)
+                            / (RADAR_COLOR_MAX_SPEED * 2.0))
+                            .clamp(0.0, 1.0);
+                    let ship_radar_color = ship_color_gradient.0.at(speed_color_interp.into());
+
+                    painter.set_translation(Vec3 {
+                        x: theta.cos() * radar_r,
+                        y: theta.sin() * radar_r,
+                        z: 0.0,
+                    });
+                    painter.color = Color::rgba(
+                        ship_radar_color.r as f32,
+                        ship_radar_color.g as f32,
+                        ship_radar_color.b as f32,
+                        0.8,
+                    );
+                    painter.hollow = true;
+
+                    let max_radar_range = RADAR_HUD_OUTER_RADIUS / RADAR_HUD_SCALE;
+                    let size =
+                        ((max_radar_range - r) / max_radar_range).clamp(0.0, 1.0) * 4.0 + 2.0;
+
+                    painter.thickness = (size / 4.0).clamp(0.0, 1.0);
+                    painter.set_rotation(Quat::from_axis_angle(Vec3::Z, dv.y.atan2(dv.x)));
+                    painter.rect(Vec2::splat(size));
                 }
             }
         }
