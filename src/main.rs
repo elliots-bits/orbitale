@@ -53,7 +53,14 @@ fn main() {
     );
     app.add_systems(
         Update,
-        (camera::update, lasers::draw, background::update, ui::draw).in_set(AppStage::Draw),
+        (
+            camera::update,
+            lasers::draw,
+            background::update,
+            ui::draw_healthbar,
+            ui::draw_hud,
+        )
+            .in_set(AppStage::Draw),
     );
     impulses_aggregator::setup(&mut app);
     despawn_queue::setup(&mut app);
