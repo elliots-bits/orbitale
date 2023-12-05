@@ -7,10 +7,10 @@ use bevy_rapier2d::{
 use crate::{
     impulses_aggregator::AddExternalImpulse,
     lasers::{self, LaserAbility},
+    thruster::Thruster,
 };
 
 const DRIVE_ENGINE_IMPULSE: f32 = 6.0;
-const BRAKE_ENGINE_IMPULSE: f32 = 2.0;
 const LASER_KNOCKBACK_IMPULSE: f32 = 3.0;
 const ROTATION_MUL: f32 = 8.0;
 
@@ -23,17 +23,27 @@ pub fn control(
     mut commands: Commands,
     time: Res<Time>,
     mut impulses: EventWriter<AddExternalImpulse>,
-    mut player: Query<(Entity, &mut LaserAbility, &Transform, &Velocity), With<PlayerMarker>>,
+    mut player: Query<
+        (
+            Entity,
+            &mut LaserAbility,
+            &mut Thruster,
+            &Transform,
+            &Velocity,
+        ),
+        With<PlayerMarker>,
+    >,
     keys: Res<Input<KeyCode>>,
 ) {
-    if let Ok((entity, mut laser_ability, transform, velocity)) = player.get_single_mut() {
+    if let Ok((entity, mut laser_ability, mut thruster, transform, velocity)) =
+        player.get_single_mut()
+    {
         let mut linear_impulse = Vec2::ZERO;
         let mut angular_impulse = 0.0;
         if keys.pressed(KeyCode::Up) {
-            linear_impulse.x += DRIVE_ENGINE_IMPULSE;
-        }
-        if keys.pressed(KeyCode::Down) {
-            linear_impulse.x -= BRAKE_ENGINE_IMPULSE;
+            thruster.rampup(time.delta_seconds());
+        } else {
+            thruster.shutoff(time.delta_seconds());
         }
         if keys.pressed(KeyCode::Right) {
             angular_impulse -= DRIVE_ENGINE_IMPULSE * ROTATION_MUL;
@@ -67,6 +77,13 @@ pub fn control(
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         PlayerMarker,
+        Thruster {
+            max_thrust: 8.0,
+            current_thrust: 0.0,
+            rampup_rate: 1.5,
+            shutoff_rate: 5.0,
+            ignition_thrust: 3.0,
+        },
         LaserAbility {
             last_shot: None,
             cooldown: LASER_COOLDOWN_S,

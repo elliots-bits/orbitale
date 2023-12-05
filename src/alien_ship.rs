@@ -9,9 +9,9 @@ use crate::{
     player::PlayerMarker,
 };
 
-const DRIVE_ENGINE_IMPULSE: f32 = 3.0;
+const DRIVE_ENGINE_IMPULSE: f32 = 2.0;
 const LASER_KNOCKBACK_IMPULSE: f32 = 50.0;
-const ROTATION_MUL: f32 = 25.0;
+const ROTATION_MUL: f32 = 15.0;
 
 pub const ALIEN_SHIP_LASER_COOLDOWN_S: f32 = 0.5;
 

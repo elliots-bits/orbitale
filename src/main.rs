@@ -8,6 +8,7 @@ mod impulses_aggregator;
 mod lasers;
 mod player;
 mod system_sets;
+mod thruster;
 
 use bevy::{log::LogPlugin, prelude::*};
 use bevy_rapier2d::plugin::{NoUserData, RapierConfiguration, RapierPhysicsPlugin, TimestepMode};
@@ -43,14 +44,11 @@ fn main() {
     });
     app.add_systems(
         Update,
-        (
-            player::control,
-            lasers::update,
-            alien_waves::update,
-            alien_ship::update,
-            collisions_handler::update,
-        )
-            .in_set(AppStage::Simulation),
+        (player::control, alien_waves::update, alien_ship::update).in_set(AppStage::Control),
+    );
+    app.add_systems(
+        Update,
+        (thruster::update, lasers::update, collisions_handler::update).in_set(AppStage::Simulation),
     );
     app.add_systems(
         Update,
