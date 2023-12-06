@@ -226,7 +226,7 @@ pub fn draw_hud(
                     + RADAR_HUD_INNER_RADIUS)
                     .clamp(RADAR_HUD_INNER_RADIUS, RADAR_HUD_OUTER_RADIUS);
                 let ship_closing_speed = dv.length() * dv.normalize().dot(dp.normalize());
-                let size = collider.as_ball().unwrap().radius() / RADAR_HUD_SCALE;
+                let size = collider.as_ball().unwrap().radius() * RADAR_HUD_SCALE;
 
                 if radar_r - size >= RADAR_HUD_INNER_RADIUS
                     && radar_r + size <= RADAR_HUD_OUTER_RADIUS
