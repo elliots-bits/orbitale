@@ -1,9 +1,9 @@
 use bevy::prelude::*;
-use bevy_rapier2d::geometry::ColliderMassProperties;
+use bevy_rapier2d::{dynamics::Velocity, geometry::ColliderMassProperties};
 
 use crate::impulses_aggregator::AddExternalImpulse;
 
-const GRAVITATIONAL_CONSTANT: f32 = 5.0e-2;
+const GRAVITATIONAL_CONSTANT: f32 = 5.0;
 
 #[derive(Component)]
 pub struct AttractingBody;
@@ -19,9 +19,10 @@ fn gravity_formula(d: f32, m: f32) -> f32 {
 }
 
 pub fn update(
-    mut impulses: EventWriter<AddExternalImpulse>,
+    mut _impulses: EventWriter<AddExternalImpulse>,
+    time: Res<Time>,
     attracting_bodies: Query<(Entity, &ColliderMassProperties, &Transform), With<AttractingBody>>,
-    affected_bodies: Query<(Entity, &Transform, &ColliderMassProperties), With<AffectedByGravity>>,
+    mut affected_bodies: Query<(&mut Velocity, &Transform), With<AffectedByGravity>>,
 ) {
     let mut attracting_pos_mass = Vec::<(Vec2, f32)>::new();
     for (entity, mass_props, transform) in attracting_bodies.iter() {
@@ -32,27 +33,18 @@ pub fn update(
         }
     }
     for (
-        entity,
+        mut velocity,
         Transform {
             translation: pos, ..
         },
-        collider_mass_props,
-    ) in affected_bodies.iter()
+    ) in affected_bodies.iter_mut()
     {
-        if let &ColliderMassProperties::Mass(mass) = collider_mass_props {
-            let mut force = Vec2::ZERO;
-            for &(opos, omass) in attracting_pos_mass.iter() {
-                let d = opos - pos.xy();
-                force += d.normalize() * gravity_formula(d.length(), omass);
-            }
-            impulses.send(AddExternalImpulse {
-                entity,
-                impulse: force * mass,
-                torque_impulse: 0.0,
-            });
-        } else {
-            error!("Attracted entity {:?} has a ColliderMassProperties that is not of the Mass variant. Can't compute gravity.", entity);
+        let mut acceleration = Vec2::ZERO;
+        for &(opos, omass) in attracting_pos_mass.iter() {
+            let d = opos - pos.xy();
+            acceleration += d.normalize() * gravity_formula(d.length(), omass);
         }
+        velocity.linvel += acceleration * time.delta_seconds();
     }
 }
 
@@ -87,9 +79,9 @@ pub fn plan_course(
         path.push(pos);
         t += step_dt;
 
-        // if closest_flyby <= 0.0 {
-        //     break;
-        // }
+        if closest_flyby <= 0.0 {
+            break;
+        }
     }
     CoursePlanning {
         path,

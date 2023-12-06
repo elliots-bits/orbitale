@@ -92,7 +92,7 @@ fn initialize_game_camera(
                 tile_size: Vec2::new(3840.0, 2160.0),
                 cols: 1,
                 rows: 1,
-                scale: 2.0,
+                scale: 2.7,
                 z: -2.0,
                 ..Default::default()
             },

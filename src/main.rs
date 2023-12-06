@@ -30,7 +30,6 @@ fn main() {
     let mut app = App::new();
 
     app.add_state::<AppState>();
-
     app.add_plugins((
         DefaultPlugins.set(LogPlugin {
             filter: "info,wgpu_core=error,wgpu_hal=error,space_chase=debug".into(),
@@ -95,7 +94,6 @@ fn main() {
             .in_set(AppStage::Draw)
             .run_if(in_state(AppState::Game)),
     );
-
     impulses_aggregator::setup(&mut app);
     despawn_queue::setup(&mut app);
     system_sets::setup(&mut app);
