@@ -11,7 +11,6 @@ use crate::{
 
 pub fn update(
     mut _commands: Commands,
-
     mut next_state: ResMut<NextState<AppState>>,
     mut despawn_queue: ResMut<DespawnQueue>,
     mut collisions: EventReader<CollisionEvent>,

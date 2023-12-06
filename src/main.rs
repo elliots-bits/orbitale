@@ -16,7 +16,7 @@ use bevy_vector_shapes::ShapePlugin;
 use system_sets::AppStage;
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
-enum AppState {
+pub enum AppState {
     #[default]
     Game,
     DeathScreen,

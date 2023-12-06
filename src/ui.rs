@@ -17,6 +17,8 @@ const RADAR_HUD_INNER_RADIUS: f32 = 150.0;
 const RADAR_HUD_OUTER_RADIUS: f32 = 400.0;
 const RADAR_HUD_SCALE: f32 = 1.0 / 80.0;
 const RADAR_COLOR_MAX_SPEED: f32 = 3000.0;
+const RADAR_ENTITIES_ALPHA: f32 = 0.9;
+const RADAR_CIRCLES_ALPHA: f32 = 0.6;
 
 #[derive(Resource)]
 pub struct RadarShipsColorGradient(pub colorgrad::Gradient);
@@ -88,10 +90,10 @@ pub fn draw_hud(
         painter.set_2d();
         painter.render_layers = Some(RenderLayers::layer(UI_LAYER));
         painter.color = Color::Rgba {
-            red: 0.25,
-            green: 0.25,
-            blue: 0.25,
-            alpha: 0.2,
+            red: 0.4,
+            green: 0.4,
+            blue: 0.4,
+            alpha: RADAR_CIRCLES_ALPHA,
         };
         painter.hollow = true;
         painter.thickness = 1.0;
@@ -101,12 +103,11 @@ pub fn draw_hud(
         if let Ok((cam_transform, cam_proj)) = camera.get_single() {
             let cam_pos = cam_transform.translation.xy();
             let cam_area = cam_proj.area;
-            let _abs_cam_area = Rect {
+            let abs_cam_area = Rect {
                 min: cam_area.min + cam_pos,
                 max: cam_area.max + cam_pos,
             };
             for (at, av) in alien_ships.iter() {
-                // if !abs_cam_area.contains(at.translation.xy()) {
                 let dp = at.translation.xy() - pt.translation.xy();
                 let dv = av.linvel - pv.linvel;
 
@@ -131,7 +132,7 @@ pub fn draw_hud(
                     ship_radar_color.r as f32,
                     ship_radar_color.g as f32,
                     ship_radar_color.b as f32,
-                    0.8,
+                    RADAR_ENTITIES_ALPHA,
                 );
                 painter.hollow = true;
 
@@ -141,8 +142,17 @@ pub fn draw_hud(
                 painter.thickness = (size / 4.0).clamp(0.0, 1.0);
                 painter.set_rotation(Quat::from_axis_angle(Vec3::Z, dv.y.atan2(dv.x)));
                 painter.rect(Vec2::splat(size));
+
+                if abs_cam_area.contains(at.translation.xy()) {
+                    // Highlight ship
+                    painter.set_translation(dp.extend(0.0) / cam_proj.scale);
+                    painter.set_rotation(Quat::default());
+                    painter.hollow = true;
+                    painter.thickness = 1.0;
+                    painter.color = Color::hex("ff3030ff").unwrap();
+                    painter.rect(Vec2::splat(64.0 / cam_proj.scale));
+                }
             }
         }
-        // }
     }
 }
