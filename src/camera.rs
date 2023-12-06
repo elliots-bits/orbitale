@@ -89,10 +89,10 @@ fn initialize_game_camera(
                 speed: LayerSpeed::Bidirectional(1.0, 1.0),
                 repeat: LayerRepeat::Bidirectional(RepeatStrategy::Same, RepeatStrategy::Same),
                 path: "nasa_milky_way.png".to_string(),
-                tile_size: Vec2::new(9725.0, 4862.0),
+                tile_size: Vec2::new(3840.0, 2160.0),
                 cols: 1,
                 rows: 1,
-                scale: 1.0,
+                scale: 2.0,
                 z: -2.0,
                 ..Default::default()
             },
