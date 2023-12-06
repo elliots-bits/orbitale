@@ -13,7 +13,7 @@ use bevy_parallax::{
 };
 use bevy_rapier2d::dynamics::Velocity;
 
-use crate::player::PlayerMarker;
+use crate::{player::PlayerMarker, AppState};
 
 pub const GAME_LAYER: Layer = 0;
 pub const UI_LAYER: Layer = 31;
@@ -26,11 +26,18 @@ pub struct UICameraMarker;
 
 pub fn setup(app: &mut App) {
     app.add_plugins(ParallaxPlugin);
-    app.add_systems(Startup, initialize_camera);
-    app.add_systems(Update, update_camera.before(ParallaxSystems));
+    app.add_systems(Startup, initialize_ui_camera);
+    app.add_systems(OnEnter(AppState::Game), initialize_game_camera);
+    app.add_systems(OnExit(AppState::Game), cleanup_game_camera);
+    app.add_systems(
+        Update,
+        update_game_camera
+            .before(ParallaxSystems)
+            .run_if(in_state(AppState::Game)),
+    );
 }
 
-fn initialize_camera(
+fn initialize_game_camera(
     mut commands: Commands,
     mut create_parallax: EventWriter<CreateParallaxEvent>,
 ) {
@@ -92,6 +99,13 @@ fn initialize_camera(
         ],
         camera: camera.id(),
     });
+}
+
+fn cleanup_game_camera(mut commands: Commands, query: Query<Entity, With<GameCameraMarker>>) {
+    commands.entity(query.single()).despawn_recursive();
+}
+
+fn initialize_ui_camera(mut commands: Commands) {
     commands.spawn((
         Camera2dBundle {
             camera: Camera {
@@ -112,7 +126,7 @@ fn initialize_camera(
     ));
 }
 
-fn update_camera(
+fn update_game_camera(
     mut camera: Query<
         (Entity, &Transform, &mut OrthographicProjection),
         (With<GameCameraMarker>, Without<PlayerMarker>),

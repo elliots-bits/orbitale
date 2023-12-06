@@ -101,7 +101,7 @@ pub fn draw_hud(
         if let Ok((cam_transform, cam_proj)) = camera.get_single() {
             let cam_pos = cam_transform.translation.xy();
             let cam_area = cam_proj.area;
-            let abs_cam_area = Rect {
+            let _abs_cam_area = Rect {
                 min: cam_area.min + cam_pos,
                 max: cam_area.max + cam_pos,
             };

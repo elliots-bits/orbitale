@@ -6,10 +6,13 @@ use crate::{
     despawn_queue::DespawnQueue,
     lasers::{Laser, LaserOrigin},
     player::{PlayerHP, PlayerMarker},
+    AppState,
 };
 
 pub fn update(
     mut _commands: Commands,
+
+    mut next_state: ResMut<NextState<AppState>>,
     mut despawn_queue: ResMut<DespawnQueue>,
     mut collisions: EventReader<CollisionEvent>,
     mut player: Query<&mut PlayerHP, With<PlayerMarker>>,
@@ -34,6 +37,10 @@ pub fn update(
                     // debug!("Player's been hit by enemy");
                     despawn_queue.1.insert(laser_entity);
                     player_hp.decrease(laser.damage);
+
+                    if player_hp.current == 0.0 {
+                        next_state.set(AppState::DeathScreen);
+                    }
                 }
             }
 

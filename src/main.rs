@@ -15,16 +15,28 @@ use bevy_rapier2d::plugin::{NoUserData, RapierConfiguration, RapierPhysicsPlugin
 use bevy_vector_shapes::ShapePlugin;
 use system_sets::AppStage;
 
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+enum AppState {
+    #[default]
+    Game,
+    DeathScreen,
+}
+
 fn main() {
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins.set(LogPlugin {
-        filter: "info,wgpu_core=error,wgpu_hal=error,space_chase=debug".into(),
-        level: bevy::log::Level::DEBUG,
-    }))
-    .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(1.0))
-    .add_plugins(ShapePlugin::default())
-    .add_systems(Startup, (ui::setup, player::setup, alien_waves::setup))
-    .insert_resource(RapierConfiguration {
+
+    app.add_state::<AppState>();
+
+    app.add_plugins((
+        DefaultPlugins.set(LogPlugin {
+            filter: "info,wgpu_core=error,wgpu_hal=error,space_chase=debug".into(),
+            level: bevy::log::Level::DEBUG,
+        }),
+        RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(1.0),
+        ShapePlugin::default(),
+    ));
+
+    app.insert_resource(RapierConfiguration {
         gravity: Vec2::ZERO,
         timestep_mode: TimestepMode::Variable {
             max_dt: 1.0 / 60.0,
@@ -33,21 +45,41 @@ fn main() {
         },
         ..default()
     });
+
+    app.add_systems(
+        OnEnter(AppState::Game),
+        (ui::setup, player::setup, alien_waves::setup),
+    );
+    app.add_systems(OnExit(AppState::Game), player::cleanup);
+
+    app.add_systems(OnEnter(AppState::DeathScreen), on_death);
+
     app.add_systems(
         Update,
-        (player::control, alien_waves::update, alien_ship::update).in_set(AppStage::Control),
+        (player::control, alien_waves::update, alien_ship::update)
+            .in_set(AppStage::Control)
+            .run_if(in_state(AppState::Game)),
     );
     app.add_systems(
         Update,
-        (thruster::update, lasers::update, collisions_handler::update).in_set(AppStage::Simulation),
+        (thruster::update, lasers::update, collisions_handler::update)
+            .in_set(AppStage::Simulation)
+            .run_if(in_state(AppState::Game)),
     );
     app.add_systems(
         Update,
-        (lasers::draw, ui::draw_healthbar, ui::draw_hud).in_set(AppStage::Draw),
+        (lasers::draw, ui::draw_healthbar, ui::draw_hud)
+            .in_set(AppStage::Draw)
+            .run_if(in_state(AppState::Game)),
     );
+
     impulses_aggregator::setup(&mut app);
     despawn_queue::setup(&mut app);
     system_sets::setup(&mut app);
     camera::setup(&mut app);
     app.run();
+}
+
+fn on_death(mut next_state: ResMut<NextState<AppState>>) {
+    next_state.set(AppState::Game);
 }

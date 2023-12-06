@@ -127,3 +127,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         game_layer(),
     ));
 }
+
+pub fn cleanup(mut commands: Commands, query: Query<Entity, With<PlayerMarker>>) {
+    commands.entity(query.single()).despawn_recursive();
+}
