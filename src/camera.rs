@@ -26,9 +26,11 @@ pub struct UICameraMarker;
 
 pub fn setup(app: &mut App) {
     app.add_plugins(ParallaxPlugin);
-    app.add_systems(Startup, initialize_ui_camera);
-    app.add_systems(OnEnter(AppState::Game), initialize_game_camera);
-    app.add_systems(OnExit(AppState::Game), cleanup_game_camera);
+    app.add_systems(
+        OnEnter(AppState::Game),
+        (initialize_game_camera, initialize_ui_camera),
+    );
+    app.add_systems(OnExit(AppState::Game), cleanup_camera);
     app.add_systems(
         Update,
         update_game_camera
@@ -101,12 +103,14 @@ fn initialize_game_camera(
     });
 }
 
-fn cleanup_game_camera(
+fn cleanup_camera(
     mut commands: Commands,
-    query: Query<Entity, With<GameCameraMarker>>,
+    camera_query: Query<Entity, With<Camera>>,
     parallax: Query<Entity, With<bevy_parallax::LayerComponent>>,
 ) {
-    commands.entity(query.single()).despawn_recursive();
+    for entity in camera_query.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
     for entity in parallax.iter() {
         commands.entity(entity).despawn_recursive();
     }

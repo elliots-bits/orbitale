@@ -18,6 +18,7 @@ use crate::{
     gravity::plan_course,
     healthpoints::HealthPoints,
     player::PlayerMarker,
+    AppState,
 };
 
 const BAR_SIZE: Vec2 = Vec2 { x: 300.0, y: 25.0 };

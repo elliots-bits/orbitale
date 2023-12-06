@@ -9,6 +9,7 @@ mod gravity;
 mod healthpoints;
 mod impulses_aggregator;
 mod lasers;
+mod menu;
 mod player;
 mod system_sets;
 mod thruster;
@@ -23,6 +24,7 @@ use system_sets::AppStage;
 pub enum AppState {
     #[default]
     Game,
+    Menu,
     DeathScreen,
 }
 
@@ -67,8 +69,6 @@ fn main() {
         ),
     );
 
-    app.add_systems(OnEnter(AppState::DeathScreen), on_death);
-
     app.add_systems(
         Update,
         (player::control, alien_waves::update, alien_ship::update)
@@ -98,9 +98,6 @@ fn main() {
     despawn_queue::setup(&mut app);
     system_sets::setup(&mut app);
     camera::setup(&mut app);
+    menu::setup(&mut app);
     app.run();
-}
-
-fn on_death(mut next_state: ResMut<NextState<AppState>>) {
-    next_state.set(AppState::Game);
 }
