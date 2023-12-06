@@ -33,12 +33,25 @@ const RADAR_PLANNED_COURSE_ALPHA: f32 = 0.5;
 #[derive(Resource)]
 pub struct RadarShipsColorGradient(pub colorgrad::Gradient);
 
+#[derive(Resource)]
+pub struct CoursePlanningColorGradient(pub colorgrad::Gradient);
+
 pub fn setup(mut commands: Commands) {
     commands.insert_resource(RadarShipsColorGradient(
         CustomGradient::new()
             .colors(&[
                 colorgrad::Color::new(0.0, 0.3, 1.0, 1.0),
                 colorgrad::Color::new(0.6, 0.6, 0.6, 1.0),
+                colorgrad::Color::new(1.0, 0.0, 0.0, 1.0),
+            ])
+            .build()
+            .unwrap(),
+    ));
+    commands.insert_resource(CoursePlanningColorGradient(
+        CustomGradient::new()
+            .colors(&[
+                colorgrad::Color::new(0.0, 1.0, 0.0, 1.0),
+                colorgrad::Color::new(0.6, 0.5, 0.0, 1.0),
                 colorgrad::Color::new(1.0, 0.0, 0.0, 1.0),
             ])
             .build()
@@ -91,6 +104,7 @@ pub fn draw_healthbar(
 pub fn draw_hud(
     mut painter: ShapePainter,
     ship_color_gradient: Res<RadarShipsColorGradient>,
+    course_color_gradient: Res<CoursePlanningColorGradient>,
     camera: Query<(&Transform, &OrthographicProjection), With<GameCameraMarker>>,
     player: Query<(&Transform, &Velocity), With<PlayerMarker>>,
     alien_ships: Query<(&Transform, &Velocity), With<AlienShipMarker>>,
@@ -189,7 +203,7 @@ pub fn draw_hud(
 
                 let body_closing_speed = dv.length() * dv.normalize().dot(dp.normalize());
 
-                let closest_arc = radar_arc_at_distance(body_radius, r - body_radius);
+                let closest_arc = radar_arc_at_distance(body_radius, r - body_radius / 2.0);
 
                 if (RADAR_HUD_INNER_RADIUS..=RADAR_HUD_OUTER_RADIUS).contains(&radar_r) {
                     let speed_color_interp = 1.0
@@ -215,7 +229,7 @@ pub fn draw_hud(
                     painter.hollow = true;
                     // painter.thickness = radar_size_at_distance(body_radius, r);
                     painter.thickness = (body_radius * RADAR_HUD_SCALE) + 4.0;
-                    painter.cap = Cap::None;
+                    painter.cap = Cap::Round;
                     painter.arc(
                         radar_r.max(RADAR_HUD_INNER_RADIUS + painter.thickness),
                         -theta - closest_arc + PI / 2.0,
@@ -240,27 +254,41 @@ pub fn draw_hud(
             })
             .collect::<Vec<(Vec2, f32, f32)>>();
 
-        let planned_course = plan_course(60.0, 0.05, pt.translation.xy(), pv.linvel, bodies);
+        let max_dt = 30.0;
+        let step_dt = 0.05;
+        let max_segments = max_dt / step_dt;
+        let planned_course = plan_course(max_dt, step_dt, pt.translation.xy(), pv.linvel, bodies);
 
         painter.set_translation(Vec2::ZERO.extend(0.5));
         painter.set_rotation(Quat::default());
-        let base_color = if planned_course.closest_flyby <= 32.0 {
-            Color::RED
-        } else {
-            Color::GREEN
-        };
-        painter.thickness = 0.5;
         let mut last_point: Option<Vec2> = None;
-        for (i, &point) in planned_course.path.iter().enumerate() {
+        for (i, &(point, d)) in planned_course.path.iter().enumerate() {
             if let Some(previous_point) = last_point {
                 let a = vec_to_radar(previous_point - pt.translation.xy());
                 let b = vec_to_radar(point - pt.translation.xy());
-                painter.color = base_color.with_a(
-                    (RADAR_PLANNED_COURSE_ALPHA
-                        * (1.0 - (i as f32 / planned_course.path.len() as f32)))
-                        .powf(1.3),
-                );
-                painter.line(a.extend(0.0), b.extend(0.0));
+                if b.length() < RADAR_HUD_OUTER_RADIUS - 0.1
+                    && b.length() < RADAR_HUD_OUTER_RADIUS - 0.1
+                {
+                    let (color, alpha) = if planned_course.closest_flyby < 32.0 {
+                        (
+                            course_color_gradient
+                                .0
+                                .at(i as f64 / planned_course.path.len() as f64),
+                            RADAR_PLANNED_COURSE_ALPHA,
+                        )
+                    } else {
+                        (
+                            course_color_gradient.0.at(250.0 / d as f64),
+                            (RADAR_PLANNED_COURSE_ALPHA
+                                * (1.0 - (i as f32 / planned_course.path.len() as f32)))
+                                .powf(1.4),
+                        )
+                    };
+                    painter.color =
+                        Color::rgba(color.r as f32, color.g as f32, color.b as f32, alpha);
+                    painter.thickness = ((i as f32 / max_segments).powf(3.0) * 30.0).max(0.5);
+                    painter.line(a.extend(0.0), b.extend(0.0));
+                }
             }
             last_point = Some(point);
         }

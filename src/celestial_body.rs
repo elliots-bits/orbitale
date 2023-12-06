@@ -37,6 +37,25 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // This is this environment generation.
     let radius = 585.0;
 
+    // let sun_id = commands
+    //     .spawn((
+    //         CelestialBodyMarker,
+    //         SpriteBundle {
+    //             texture: asset_server.load("mike-petrucci-moon.png"),
+    //             transform: Transform::from_translation(Vec3::new(-10000.0, 100000.0, 0.0))
+    //                 .with_scale(Vec3::splat(50.0)),
+    //             ..default()
+    //         },
+    //         Ccd::enabled(),
+    //         RigidBody::Fixed,
+    //         AttractingBody,
+    //         Collider::ball(radius),
+    //         ColliderMassProperties::Mass(5e8),
+    //         ActiveEvents::COLLISION_EVENTS,
+    //         game_layer(),
+    //     ))
+    //     .id();
+
     let parent_moon_id = commands
         .spawn((
             CelestialBodyMarker,
@@ -46,6 +65,12 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     .with_scale(Vec3::splat(5.0)),
                 ..default()
             },
+            // FixedOrbit {
+            //     parent: sun_id,
+            //     radius: 140000.0,
+            //     theta: 0.0,
+            //     period: 3000.0,
+            // },
             Ccd::enabled(),
             RigidBody::Fixed,
             AttractingBody,
@@ -66,7 +91,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             },
             FixedOrbit {
                 parent: parent_moon_id,
-                radius: 14000.0,
+                radius: 18000.0,
                 theta: 0.0,
                 period: 300.0,
             },
@@ -85,7 +110,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             CelestialBodyMarker,
             FixedOrbit {
                 parent: child_moon_id,
-                radius: 4000.0,
+                radius: 7000.0,
                 theta: 0.0,
                 period: 40.0,
             },

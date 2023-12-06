@@ -14,7 +14,7 @@ use crate::{
 };
 
 const DRIVE_ENGINE_IMPULSE: f32 = 6.0;
-const LASER_KNOCKBACK_IMPULSE: f32 = 3.0;
+const LASER_KNOCKBACK_IMPULSE: f32 = 1.0;
 const ROTATION_MUL: f32 = 8.0;
 
 const LASER_COOLDOWN_S: f32 = 0.025;

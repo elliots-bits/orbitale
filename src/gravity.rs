@@ -3,7 +3,7 @@ use bevy_rapier2d::{dynamics::Velocity, geometry::ColliderMassProperties};
 
 use crate::impulses_aggregator::AddExternalImpulse;
 
-const GRAVITATIONAL_CONSTANT: f32 = 5.0;
+const GRAVITATIONAL_CONSTANT: f32 = 8.0;
 
 #[derive(Component)]
 pub struct AttractingBody;
@@ -15,7 +15,7 @@ pub struct AffectedByGravity;
 fn gravity_formula(d: f32, m: f32) -> f32 {
     // Real spacetime is very scary, empty, and difficult to navigate.
     // This one is a little bit more intuitive.
-    GRAVITATIONAL_CONSTANT * m / d.max(1.0).powf(1.5)
+    GRAVITATIONAL_CONSTANT * m / d.max(1.0).powf(1.4)
 }
 
 pub fn update(
@@ -49,7 +49,7 @@ pub fn update(
 }
 
 pub struct CoursePlanning {
-    pub path: Vec<Vec2>,
+    pub path: Vec<(Vec2, f32)>, // (pos, distance to nearest object)
     pub closest_flyby: f32,
 }
 
@@ -65,20 +65,24 @@ pub fn plan_course(
     let mut closest_flyby = f32::INFINITY;
     while t < max_dt {
         let mut acceleration = Vec2::ZERO;
+        let mut closest_body_distance_at_step = f32::INFINITY;
 
         for (op, m, r) in bodies.iter() {
             let d = *op - pos;
-            if (d.length() - r) < closest_flyby {
-                closest_flyby = d.length() - r;
+            if (d.length() - r) < closest_body_distance_at_step {
+                closest_body_distance_at_step = d.length() - r;
             }
             acceleration += d.normalize() * gravity_formula(d.length(), *m);
         }
 
         velocity += acceleration * step_dt;
         pos += velocity * step_dt;
-        path.push(pos);
+        path.push((pos, closest_body_distance_at_step));
         t += step_dt;
 
+        if closest_body_distance_at_step < closest_flyby {
+            closest_flyby = closest_body_distance_at_step;
+        }
         if closest_flyby <= 0.0 {
             break;
         }
