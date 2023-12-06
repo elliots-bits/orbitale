@@ -9,7 +9,8 @@ use colorgrad::CustomGradient;
 use crate::{
     alien_ship::AlienShipMarker,
     camera::{GameCameraMarker, UI_LAYER},
-    player::{PlayerHP, PlayerMarker},
+    healthpoints::HealthPoints,
+    player::PlayerMarker,
 };
 
 const BAR_SIZE: Vec2 = Vec2 { x: 300.0, y: 25.0 };
@@ -39,7 +40,7 @@ pub fn setup(mut commands: Commands) {
 pub fn draw_healthbar(
     mut painter: ShapePainter,
     q_window: Query<&Window, With<PrimaryWindow>>,
-    player_hp: Query<&PlayerHP, With<PlayerMarker>>,
+    player_hp: Query<&HealthPoints, With<PlayerMarker>>,
 ) {
     let win = q_window.single();
     if let Ok(hp) = player_hp.get_single() {

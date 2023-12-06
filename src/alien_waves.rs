@@ -9,11 +9,14 @@ use std::f32::consts::PI;
 use crate::{
     alien_ship::{AlienShipMarker, ALIEN_SHIP_LASER_COOLDOWN_S},
     camera::game_layer,
+    gravity::AffectedByGravity,
+    healthpoints::HealthPoints,
     lasers::LaserAbility,
     player::PlayerMarker,
 };
 use rand::distributions::Uniform;
 
+const ENABLE_ENEMIES: bool = true;
 const WAVE_DURATION_S: f32 = 10.0;
 
 #[derive(Resource)]
@@ -38,8 +41,9 @@ pub fn update(
 ) {
     if let Ok(player_t) = player.get_single() {
         let mut rng = rand::thread_rng();
-        let spawn_wave = wave.started_at.is_none()
-            || time.elapsed_seconds() - wave.started_at.unwrap() >= WAVE_DURATION_S;
+        let spawn_wave = ENABLE_ENEMIES
+            && (wave.started_at.is_none()
+                || time.elapsed_seconds() - wave.started_at.unwrap() >= WAVE_DURATION_S);
         if spawn_wave {
             let angle_side = Uniform::new(0.0, PI * 2.0);
             let radius_side = Uniform::new(1000.0, 2000.0);
@@ -56,6 +60,10 @@ pub fn update(
                 );
                 commands.spawn((
                     AlienShipMarker,
+                    HealthPoints {
+                        max: 10.0,
+                        current: 10.0,
+                    },
                     LaserAbility {
                         last_shot: None,
                         cooldown: ALIEN_SHIP_LASER_COOLDOWN_S,
@@ -75,6 +83,7 @@ pub fn update(
                     },
                     Velocity::default(),
                     ActiveEvents::COLLISION_EVENTS,
+                    AffectedByGravity,
                     game_layer(),
                 ));
             }

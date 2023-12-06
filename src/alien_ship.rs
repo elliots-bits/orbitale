@@ -106,3 +106,9 @@ pub fn update(
         error!("Can't process Alien Ships: player not found");
     }
 }
+
+pub fn cleanup(mut commands: Commands, ships: Query<Entity, With<AlienShipMarker>>) {
+    for entity in ships.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+}

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::{
     dynamics::{Ccd, RigidBody, Velocity},
-    geometry::{ActiveEvents, Collider, Sensor},
+    geometry::{ActiveEvents, Collider, ColliderMassProperties, Sensor},
 };
 use bevy_vector_shapes::{painter::ShapePainter, shapes::RectPainter};
 
@@ -75,6 +75,7 @@ pub fn spawn(commands: &mut Commands, position: Vec2, velocity: Vec2, angle: f32
         RigidBody::KinematicVelocityBased,
         Ccd::enabled(),
         Collider::ball(2.0),
+        ColliderMassProperties::Mass(1.0),
         Velocity::linear(velocity),
         ActiveEvents::COLLISION_EVENTS,
         Sensor,

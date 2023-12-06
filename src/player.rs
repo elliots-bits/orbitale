@@ -6,6 +6,8 @@ use bevy_rapier2d::{
 
 use crate::{
     camera::game_layer,
+    gravity::AffectedByGravity,
+    healthpoints::HealthPoints,
     impulses_aggregator::AddExternalImpulse,
     lasers::{self, Laser, LaserAbility, LaserOrigin},
     thruster::Thruster,
@@ -21,18 +23,6 @@ const STARTING_HP: f32 = 100.0;
 
 #[derive(Component)]
 pub struct PlayerMarker;
-
-#[derive(Component)]
-pub struct PlayerHP {
-    pub max: f32,
-    pub current: f32,
-}
-
-impl PlayerHP {
-    pub fn decrease(&mut self, amount: f32) {
-        self.current = (self.current - amount).max(0.0);
-    }
-}
 
 pub fn control(
     mut commands: Commands,
@@ -95,7 +85,7 @@ pub fn control(
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         PlayerMarker,
-        PlayerHP {
+        HealthPoints {
             max: STARTING_HP,
             current: STARTING_HP,
         },
@@ -124,6 +114,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         Velocity::default(),
         ActiveEvents::COLLISION_EVENTS,
+        AffectedByGravity,
         game_layer(),
     ));
 }

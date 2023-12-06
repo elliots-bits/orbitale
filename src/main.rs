@@ -1,8 +1,12 @@
 mod alien_ship;
 mod alien_waves;
 mod camera;
+mod celestial_body;
 mod collisions_handler;
+mod death;
 mod despawn_queue;
+mod gravity;
+mod healthpoints;
 mod impulses_aggregator;
 mod lasers;
 mod player;
@@ -48,9 +52,21 @@ fn main() {
 
     app.add_systems(
         OnEnter(AppState::Game),
-        (ui::setup, player::setup, alien_waves::setup),
+        (
+            ui::setup,
+            player::setup,
+            alien_waves::setup,
+            celestial_body::setup,
+        ),
     );
-    app.add_systems(OnExit(AppState::Game), player::cleanup);
+    app.add_systems(
+        OnExit(AppState::Game),
+        (
+            player::cleanup,
+            celestial_body::cleanup,
+            alien_ship::cleanup,
+        ),
+    );
 
     app.add_systems(OnEnter(AppState::DeathScreen), on_death);
 
@@ -62,7 +78,14 @@ fn main() {
     );
     app.add_systems(
         Update,
-        (thruster::update, lasers::update, collisions_handler::update)
+        (
+            thruster::update,
+            lasers::update,
+            collisions_handler::update,
+            gravity::update,
+            celestial_body::update,
+            death::update,
+        )
             .in_set(AppStage::Simulation)
             .run_if(in_state(AppState::Game)),
     );
