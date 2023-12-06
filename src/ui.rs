@@ -1,14 +1,19 @@
 use bevy::{prelude::*, render::view::RenderLayers, window::PrimaryWindow};
-use bevy_rapier2d::dynamics::Velocity;
+use bevy_rapier2d::{
+    dynamics::Velocity,
+    geometry::{Collider, ColliderMassProperties},
+};
 use bevy_vector_shapes::{
     painter::ShapePainter,
-    shapes::{DiscPainter, RectPainter},
+    shapes::{DiscPainter, LinePainter, RectPainter, ThicknessType},
 };
 use colorgrad::CustomGradient;
 
 use crate::{
     alien_ship::AlienShipMarker,
     camera::{GameCameraMarker, UI_LAYER},
+    celestial_body::CelestialBodyMarker,
+    gravity::plan_course,
     healthpoints::HealthPoints,
     player::PlayerMarker,
 };
@@ -85,9 +90,13 @@ pub fn draw_hud(
     camera: Query<(&Transform, &OrthographicProjection), With<GameCameraMarker>>,
     player: Query<(&Transform, &Velocity), With<PlayerMarker>>,
     alien_ships: Query<(&Transform, &Velocity), With<AlienShipMarker>>,
+    celestial_bodies: Query<
+        (&Transform, &ColliderMassProperties, &Collider),
+        With<CelestialBodyMarker>,
+    >,
 ) {
     if let Ok((pt, pv)) = player.get_single() {
-        // Draw Radar circle
+        // Draw Radar circles
         painter.set_2d();
         painter.render_layers = Some(RenderLayers::layer(UI_LAYER));
         painter.color = Color::Rgba {
@@ -100,6 +109,59 @@ pub fn draw_hud(
         painter.thickness = 1.0;
         painter.circle(RADAR_HUD_INNER_RADIUS);
         painter.circle(RADAR_HUD_OUTER_RADIUS);
+
+        // Draw current orientation line
+        let fwd = pt.up().xy();
+        let theta = fwd.y.atan2(fwd.x);
+        painter.line(
+            Vec3::new(theta.cos() * 32.0, theta.sin() * 32.0, 0.0),
+            Vec3::new(
+                theta.cos() * RADAR_HUD_INNER_RADIUS,
+                theta.sin() * RADAR_HUD_INNER_RADIUS,
+                0.0,
+            ),
+        );
+
+        // Draw planned course
+        let bodies = celestial_bodies
+            .iter()
+            .map(|(transform, massprops, collider)| {
+                if let ColliderMassProperties::Mass(mass) = massprops {
+                    (
+                        transform.translation.xy(),
+                        *mass,
+                        collider.as_ball().unwrap().radius(),
+                    )
+                } else {
+                    panic!("Use ColliderMassProperties::Mass(x) for celestial bodies")
+                }
+            })
+            .collect::<Vec<(Vec2, f32, f32)>>();
+        let planned_course = plan_course(60.0, 0.5, pt.translation.xy(), pv.linvel, bodies);
+
+        if planned_course.closest_flyby <= 0.0 {
+            painter.color = Color::RED;
+        } else {
+            painter.color = Color::GREEN;
+        }
+        painter.thickness = 0.5;
+        let mut last_point: Option<Vec2> = None;
+        for &point in planned_course.path.iter() {
+            if let Some(previous_point) = last_point {
+                let a = (previous_point - pt.translation.xy()) * RADAR_HUD_SCALE;
+                let b = (point - pt.translation.xy()) * RADAR_HUD_SCALE;
+                if a.length() >= RADAR_HUD_INNER_RADIUS
+                    && a.length() <= RADAR_HUD_OUTER_RADIUS
+                    && b.length() >= RADAR_HUD_INNER_RADIUS
+                    && b.length() <= RADAR_HUD_OUTER_RADIUS
+                {
+                    // debug!("Drawing line from {} to {}", a, b);
+                    painter.line(a.extend(0.0), b.extend(0.0));
+                }
+            }
+            last_point = Some(point);
+        }
+        debug!("");
 
         if let Ok((cam_transform, cam_proj)) = camera.get_single() {
             let cam_pos = cam_transform.translation.xy();
@@ -151,7 +213,45 @@ pub fn draw_hud(
                     painter.hollow = true;
                     painter.thickness = 1.0;
                     painter.color = Color::hex("ff3030ff").unwrap();
-                    painter.rect(Vec2::splat(64.0 / cam_proj.scale));
+                    painter.rect(Vec2::splat((64.0 / cam_proj.scale).max(10.0)));
+                }
+            }
+
+            for (at, _, collider) in celestial_bodies.iter() {
+                let dp = at.translation.xy() - pt.translation.xy();
+                let dv = -pv.linvel; // Todo if needed: take body velocity into account
+
+                let (theta, r) = (dp.y.atan2(dp.x), dp.length());
+                let radar_r = ((r - RADAR_HUD_INNER_RADIUS) * RADAR_HUD_SCALE
+                    + RADAR_HUD_INNER_RADIUS)
+                    .clamp(RADAR_HUD_INNER_RADIUS, RADAR_HUD_OUTER_RADIUS);
+                let ship_closing_speed = dv.length() * dv.normalize().dot(dp.normalize());
+                let size = collider.as_ball().unwrap().radius() / RADAR_HUD_SCALE;
+
+                if radar_r - size >= RADAR_HUD_INNER_RADIUS
+                    && radar_r + size <= RADAR_HUD_OUTER_RADIUS
+                {
+                    let speed_color_interp = 1.0
+                        - ((ship_closing_speed + RADAR_COLOR_MAX_SPEED)
+                            / (RADAR_COLOR_MAX_SPEED * 2.0))
+                            .clamp(0.0, 1.0);
+                    let ship_radar_color = ship_color_gradient.0.at(speed_color_interp.into());
+
+                    painter.set_translation(Vec3 {
+                        x: theta.cos() * radar_r,
+                        y: theta.sin() * radar_r,
+                        z: 0.0,
+                    });
+                    painter.color = Color::rgba(
+                        ship_radar_color.r as f32,
+                        ship_radar_color.g as f32,
+                        ship_radar_color.b as f32,
+                        RADAR_ENTITIES_ALPHA,
+                    );
+
+                    painter.hollow = false;
+                    painter.set_rotation(Quat::from_axis_angle(Vec3::Z, dv.y.atan2(dv.x)));
+                    painter.circle(size);
                 }
             }
         }

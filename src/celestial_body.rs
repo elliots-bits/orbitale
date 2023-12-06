@@ -36,48 +36,73 @@ impl FixedOrbit {
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // This is this environment generation.
     let radius = 585.0;
-    let scale = 3.0;
-    let transform =
-        Transform::from_translation(Vec3::new(4000.0, 4000.0, 0.0)).with_scale(Vec3::splat(scale));
+
     let parent_moon_id = commands
         .spawn((
             CelestialBodyMarker,
             SpriteBundle {
                 texture: asset_server.load("mike-petrucci-moon.png"),
-                transform,
+                transform: Transform::from_translation(Vec3::new(10000.0, 10000.0, 0.0))
+                    .with_scale(Vec3::splat(5.0)),
                 ..default()
             },
             Ccd::enabled(),
             RigidBody::Fixed,
             AttractingBody,
             Collider::ball(radius),
-            ColliderMassProperties::Mass(2e7),
+            ColliderMassProperties::Mass(5e7),
             ActiveEvents::COLLISION_EVENTS,
             game_layer(),
         ))
         .id();
 
-    let _child_moon = commands.spawn((
-        CelestialBodyMarker,
-        FixedOrbit {
-            parent: parent_moon_id,
-            radius: 6000.0,
-            theta: 0.0,
-            period: 60.0,
-        },
-        SpriteBundle {
-            texture: asset_server.load("mike-petrucci-moon.png"),
-            transform: Transform::from_scale(Vec3::splat(1.0)),
-            ..default()
-        },
-        Ccd::enabled(),
-        RigidBody::Fixed,
-        AttractingBody,
-        Collider::ball(radius),
-        ColliderMassProperties::Mass(1e6),
-        ActiveEvents::COLLISION_EVENTS,
-        game_layer(),
-    ));
+    let child_moon_id = commands
+        .spawn((
+            CelestialBodyMarker,
+            SpriteBundle {
+                texture: asset_server.load("mike-petrucci-moon.png"),
+                transform: Transform::from_scale(Vec3::splat(1.5)),
+                ..default()
+            },
+            FixedOrbit {
+                parent: parent_moon_id,
+                radius: 14000.0,
+                theta: 0.0,
+                period: 300.0,
+            },
+            Ccd::enabled(),
+            RigidBody::Fixed,
+            AttractingBody,
+            Collider::ball(radius),
+            ColliderMassProperties::Mass(1e7),
+            ActiveEvents::COLLISION_EVENTS,
+            game_layer(),
+        ))
+        .id();
+
+    let _child_child_moon_id = commands
+        .spawn((
+            CelestialBodyMarker,
+            FixedOrbit {
+                parent: child_moon_id,
+                radius: 4000.0,
+                theta: 0.0,
+                period: 40.0,
+            },
+            SpriteBundle {
+                texture: asset_server.load("mike-petrucci-moon.png"),
+                transform: Transform::from_scale(Vec3::splat(0.5)),
+                ..default()
+            },
+            Ccd::enabled(),
+            RigidBody::Fixed,
+            AttractingBody,
+            Collider::ball(radius),
+            ColliderMassProperties::Mass(1.5e6),
+            ActiveEvents::COLLISION_EVENTS,
+            game_layer(),
+        ))
+        .id();
 }
 
 pub fn update(

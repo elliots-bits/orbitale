@@ -101,8 +101,15 @@ fn initialize_game_camera(
     });
 }
 
-fn cleanup_game_camera(mut commands: Commands, query: Query<Entity, With<GameCameraMarker>>) {
+fn cleanup_game_camera(
+    mut commands: Commands,
+    query: Query<Entity, With<GameCameraMarker>>,
+    parallax: Query<Entity, With<bevy_parallax::LayerComponent>>,
+) {
     commands.entity(query.single()).despawn_recursive();
+    for entity in parallax.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
 }
 
 fn initialize_ui_camera(mut commands: Commands) {
