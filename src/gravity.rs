@@ -58,7 +58,7 @@ pub fn plan_course(
     step_dt: f32,
     mut pos: Vec2,
     mut velocity: Vec2,
-    bodies: Vec<(f32, f32, &CircularOrbitChain)>, // (mass, radius, orbit)
+    bodies: Vec<(f32, f32, CircularOrbitChain)>, // (mass, radius, orbit)
 ) -> CoursePlanning {
     let mut t = 0.0;
     let mut path = vec![];

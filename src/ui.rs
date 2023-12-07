@@ -1,21 +1,18 @@
 use std::f32::consts::PI;
 
 use bevy::{prelude::*, render::view::RenderLayers, window::PrimaryWindow};
-use bevy_rapier2d::{
-    dynamics::Velocity,
-    geometry::{Collider, ColliderMassProperties},
-};
+use bevy_rapier2d::{dynamics::Velocity, geometry::Collider};
 use bevy_vector_shapes::{
     painter::ShapePainter,
-    shapes::{Cap, DiscPainter, LinePainter, RectPainter, ThicknessType},
+    shapes::{Cap, DiscPainter, LinePainter, RectPainter},
 };
 use colorgrad::CustomGradient;
 
 use crate::{
     alien_ship::AlienShipMarker,
     camera::{GameCameraMarker, UI_LAYER},
-    celestial_body::{CelestialBodyMarker, CircularOrbitChain},
-    gravity::plan_course,
+    celestial_body::CelestialBodyMarker,
+    course_planner::{ComputedTrajectory, PLAYER_PLAN_DURATION, PLAYER_PLAN_STEP_DT},
     healthpoints::HealthPoints,
     player::PlayerMarker,
 };
@@ -106,19 +103,11 @@ pub fn draw_hud(
     ship_color_gradient: Res<RadarShipsColorGradient>,
     course_color_gradient: Res<CoursePlanningColorGradient>,
     camera: Query<(&Transform, &OrthographicProjection), With<GameCameraMarker>>,
-    player: Query<(&Transform, &Velocity), With<PlayerMarker>>,
+    player: Query<(&Transform, &Velocity, &ComputedTrajectory), With<PlayerMarker>>,
     alien_ships: Query<(&Transform, &Velocity), With<AlienShipMarker>>,
-    celestial_bodies: Query<
-        (
-            &Transform,
-            &ColliderMassProperties,
-            &Collider,
-            &CircularOrbitChain,
-        ),
-        With<CelestialBodyMarker>,
-    >,
+    celestial_bodies: Query<(&Transform, &Collider), With<CelestialBodyMarker>>,
 ) {
-    if let Ok((pt, pv)) = player.get_single() {
+    if let Ok((pt, pv, traj)) = player.get_single() {
         // Draw Radar circles
         painter.set_2d();
         painter.render_layers = Some(RenderLayers::layer(UI_LAYER));
@@ -198,7 +187,7 @@ pub fn draw_hud(
                 }
             }
 
-            for (at, _, collider, _) in celestial_bodies.iter() {
+            for (at, collider) in celestial_bodies.iter() {
                 let dp = at.translation.xy() - pt.translation.xy();
                 let dv = -pv.linvel; // Todo if needed: take body velocity into account
 
@@ -255,44 +244,30 @@ pub fn draw_hud(
             }
         }
         // Draw planned course
-        let bodies = celestial_bodies
-            .iter()
-            .map(|(_, massprops, collider, circular_orbit)| {
-                if let ColliderMassProperties::Mass(mass) = massprops {
-                    (*mass, collider.as_ball().unwrap().radius(), circular_orbit)
-                } else {
-                    panic!("Use ColliderMassProperties::Mass(x) for celestial bodies")
-                }
-            })
-            .collect::<Vec<(f32, f32, &CircularOrbitChain)>>();
-
-        let max_dt = 30.0;
-        let step_dt = 0.05;
-        let max_segments = max_dt / step_dt;
-        let planned_course = plan_course(max_dt, step_dt, pt.translation.xy(), pv.linvel, bodies);
+        let max_segments = PLAYER_PLAN_DURATION / PLAYER_PLAN_STEP_DT;
 
         painter.set_translation(Vec2::ZERO.extend(0.5));
         painter.set_rotation(Quat::default());
         let mut last_point: Option<Vec2> = None;
-        for (i, &(point, d)) in planned_course.path.iter().enumerate() {
+        for (i, &(point, d)) in traj.path.iter().enumerate() {
             if let Some(previous_point) = last_point {
                 let a = vec_to_radar(previous_point - pt.translation.xy());
                 let b = vec_to_radar(point - pt.translation.xy());
                 if b.length() < RADAR_HUD_OUTER_RADIUS - 0.1
                     && b.length() < RADAR_HUD_OUTER_RADIUS - 0.1
                 {
-                    let (color, alpha) = if planned_course.closest_flyby < 32.0 {
+                    let (color, alpha) = if traj.closest_flyby < 32.0 {
                         (
                             course_color_gradient
                                 .0
-                                .at(i as f64 / planned_course.path.len() as f64),
+                                .at(i as f64 / traj.path.len() as f64),
                             RADAR_PLANNED_COURSE_ALPHA,
                         )
                     } else {
                         (
                             course_color_gradient.0.at(250.0 / d as f64),
                             (RADAR_PLANNED_COURSE_ALPHA
-                                * (1.0 - (i as f32 / planned_course.path.len() as f32)))
+                                * (1.0 - (i as f32 / traj.path.len() as f32)))
                                 .powf(1.4),
                         )
                     };

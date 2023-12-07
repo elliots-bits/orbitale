@@ -6,6 +6,7 @@ use bevy_rapier2d::{
 
 use crate::{
     camera::game_layer,
+    course_planner::ComputedTrajectory,
     gravity::AffectedByGravity,
     healthpoints::HealthPoints,
     impulses_aggregator::AddExternalImpulse,
@@ -101,6 +102,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             last_shot: None,
             cooldown: LASER_COOLDOWN_S,
         },
+        ComputedTrajectory::default(),
         SpriteBundle {
             texture: asset_server.load("spaceship_dev1.png"),
             ..default()

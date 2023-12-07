@@ -4,6 +4,7 @@ use bevy_rapier2d::plugin::PhysicsSet;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SystemSet)]
 pub enum AppStage {
     Control,
+    Trajectories,
     Simulation,
     AggregateImpulses,
     Draw,
@@ -21,6 +22,7 @@ pub fn setup(app: &mut App) {
             PhysicsSet::Writeback,
             AppStage::AggregateImpulses,
             AppStage::Draw,
+            AppStage::Trajectories,
             AppStage::DespawnQueue,
         )
             .chain(),

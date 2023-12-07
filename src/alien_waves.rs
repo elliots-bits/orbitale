@@ -9,6 +9,7 @@ use std::f32::consts::PI;
 use crate::{
     alien_ship::{AlienShipMarker, ALIEN_SHIP_LASER_COOLDOWN_S},
     camera::game_layer,
+    course_planner::ComputedTrajectory,
     gravity::AffectedByGravity,
     healthpoints::HealthPoints,
     lasers::LaserAbility,
@@ -76,6 +77,7 @@ pub fn update(
                         last_shot: None,
                         cooldown: ALIEN_SHIP_LASER_COOLDOWN_S,
                     },
+                    ComputedTrajectory::default(),
                     SpriteBundle {
                         texture: asset_server.load("spaceship_dev1.png"),
                         transform: Transform::from_translation(pos),

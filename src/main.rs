@@ -3,6 +3,7 @@ mod alien_waves;
 mod camera;
 mod celestial_body;
 mod collisions_handler;
+mod course_planner;
 mod death;
 mod despawn_queue;
 mod gravity;
@@ -74,6 +75,15 @@ fn main() {
         Update,
         (player::control, alien_waves::update, alien_ship::update)
             .in_set(AppStage::Control)
+            .run_if(in_state(AppState::Game)),
+    );
+    app.add_systems(
+        Update,
+        (
+            course_planner::compute_player_trajectory,
+            course_planner::compute_enemies_trajectories,
+        )
+            .in_set(AppStage::Trajectories)
             .run_if(in_state(AppState::Game)),
     );
     app.add_systems(
