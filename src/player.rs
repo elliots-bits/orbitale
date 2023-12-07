@@ -117,7 +117,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         Velocity::default(),
         ActiveEvents::COLLISION_EVENTS,
-        AffectedByGravity,
+        AffectedByGravity::default(),
         game_layer(),
     ));
 }

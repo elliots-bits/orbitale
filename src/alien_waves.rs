@@ -93,7 +93,7 @@ pub fn update(
                     },
                     Velocity::default(),
                     ActiveEvents::COLLISION_EVENTS,
-                    AffectedByGravity,
+                    AffectedByGravity::default(),
                     game_layer(),
                 ));
             }

@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use bevy::prelude::*;
 use bevy_rapier2d::{
     dynamics::Velocity,
@@ -5,6 +7,7 @@ use bevy_rapier2d::{
 };
 
 use crate::{
+    alien_ship::AlienShipMarker,
     celestial_body::{CelestialBodyMarker, CircularOrbitChain},
     gravity::plan_course,
     player::PlayerMarker,
@@ -13,8 +16,10 @@ use crate::{
 pub const PLAYER_PLAN_DURATION: f32 = 30.0;
 pub const PLAYER_PLAN_STEP_DT: f32 = 0.05;
 
+const MAX_ENEMY_TRAJECTORIES_COMPUTED_PER_FRAME: u32 = 2;
+const STALE_TRAJECTORY_AGE: f32 = 1.0;
 const ENEMY_PLAN_DURATION: f32 = 15.0;
-const ENEMY_PLAN_STEP_DT: f32 = 0.1;
+const ENEMY_PLAN_STEP_DT: f32 = 0.25;
 
 #[derive(Component)]
 pub struct ComputedTrajectory {
@@ -57,7 +62,7 @@ pub fn compute_player_trajectory(
                 PLAYER_PLAN_STEP_DT,
                 t.translation.xy(),
                 v.linvel,
-                collect_celestial_bodies(bodies),
+                &collect_celestial_bodies(bodies),
             );
             traj.computed_at = time.elapsed_seconds();
             traj.step_dt = PLAYER_PLAN_STEP_DT;
@@ -67,7 +72,47 @@ pub fn compute_player_trajectory(
     }
 }
 
-pub fn compute_enemies_trajectories() {}
+pub fn compute_enemies_trajectories(
+    time: Res<Time>,
+    mut ships: Query<
+        (Entity, &Transform, &Velocity, &mut ComputedTrajectory),
+        With<AlienShipMarker>,
+    >,
+    bodies: Query<
+        (
+            &Transform,
+            &ColliderMassProperties,
+            &Collider,
+            &CircularOrbitChain,
+        ),
+        With<CelestialBodyMarker>,
+    >,
+) {
+    let bodies = collect_celestial_bodies(bodies);
+
+    let mut total_computed = 0u32;
+    for (_, t, v, mut traj) in ships.iter_mut() {
+        if total_computed >= MAX_ENEMY_TRAJECTORIES_COMPUTED_PER_FRAME {
+            break;
+        }
+        if traj.computation_requested
+            && time.elapsed_seconds() - traj.computed_at >= STALE_TRAJECTORY_AGE
+        {
+            let planned_course = plan_course(
+                ENEMY_PLAN_DURATION,
+                ENEMY_PLAN_STEP_DT,
+                t.translation.xy(),
+                v.linvel,
+                &bodies,
+            );
+            traj.computed_at = time.elapsed_seconds();
+            traj.step_dt = PLAYER_PLAN_STEP_DT;
+            traj.path = planned_course.path;
+            traj.closest_flyby = planned_course.closest_flyby;
+            total_computed += 1;
+        }
+    }
+}
 
 fn collect_celestial_bodies(
     q: Query<

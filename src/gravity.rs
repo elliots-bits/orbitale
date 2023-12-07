@@ -8,8 +8,10 @@ const GRAVITATIONAL_CONSTANT: f32 = 32.0;
 #[derive(Component)]
 pub struct AttractingBody;
 
-#[derive(Component)]
-pub struct AffectedByGravity;
+#[derive(Component, Default)]
+pub struct AffectedByGravity {
+    pub last_acceleration: Vec2,
+}
 
 #[inline(always)]
 fn gravity_formula(d: f32, m: f32) -> f32 {
@@ -22,7 +24,7 @@ pub fn update(
     mut _impulses: EventWriter<AddExternalImpulse>,
     time: Res<Time>,
     attracting_bodies: Query<(Entity, &ColliderMassProperties, &Transform), With<AttractingBody>>,
-    mut affected_bodies: Query<(&mut Velocity, &Transform), With<AffectedByGravity>>,
+    mut affected_bodies: Query<(&mut Velocity, &Transform, &mut AffectedByGravity)>,
 ) {
     let mut attracting_pos_mass = Vec::<(Vec2, f32)>::new();
     for (entity, mass_props, transform) in attracting_bodies.iter() {
@@ -37,6 +39,7 @@ pub fn update(
         Transform {
             translation: pos, ..
         },
+        mut feedback,
     ) in affected_bodies.iter_mut()
     {
         let mut acceleration = Vec2::ZERO;
@@ -44,6 +47,7 @@ pub fn update(
             let d = opos - pos.xy();
             acceleration += d.normalize() * gravity_formula(d.length(), omass);
         }
+        feedback.last_acceleration = acceleration;
         velocity.linvel += acceleration * time.delta_seconds();
     }
 }
@@ -58,7 +62,7 @@ pub fn plan_course(
     step_dt: f32,
     mut pos: Vec2,
     mut velocity: Vec2,
-    bodies: Vec<(f32, f32, CircularOrbitChain)>, // (mass, radius, orbit)
+    bodies: &Vec<(f32, f32, CircularOrbitChain)>, // (mass, radius, orbit)
 ) -> CoursePlanning {
     let mut t = 0.0;
     let mut path = vec![];
