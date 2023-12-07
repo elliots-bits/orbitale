@@ -63,7 +63,9 @@ pub fn control(
             let laser_angle = local_forward.y.atan2(local_forward.x);
             lasers::spawn(
                 &mut commands,
-                transform.translation.xy() + transform.up().xy().normalize() * 40.0,
+                transform.translation.xy()
+                    + velocity.linvel * time.delta_seconds()
+                    + transform.up().xy().normalize() * 40.0,
                 Vec2 { x: 4000.0, y: 0.0 }.rotate(local_forward) + velocity.linvel,
                 laser_angle,
                 Laser {
@@ -94,7 +96,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         Thruster {
             max_thrust: DRIVE_ENGINE_MAX_IMPULSE,
             current_thrust: 0.0,
-            rampup_rate: 3.0,
+            rampup_rate: 1.8,
             shutoff_rate: 7.0,
             ignition_thrust: DRIVE_ENGINE_INIT_IMPULSE,
         },

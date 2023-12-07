@@ -86,6 +86,7 @@ fn main() {
             celestial_body::update,
             death::update,
             particles::update,
+            particles::spawners::spawn_thruster_particles,
         )
             .in_set(AppStage::Simulation)
             .run_if(in_state(AppState::Game)),
