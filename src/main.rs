@@ -10,6 +10,7 @@ mod healthpoints;
 mod impulses_aggregator;
 mod lasers;
 mod menu;
+mod particles;
 mod player;
 mod system_sets;
 mod thruster;
@@ -84,13 +85,19 @@ fn main() {
             gravity::update,
             celestial_body::update,
             death::update,
+            particles::update,
         )
             .in_set(AppStage::Simulation)
             .run_if(in_state(AppState::Game)),
     );
     app.add_systems(
         Update,
-        (lasers::draw, ui::draw_healthbar, ui::draw_hud)
+        (
+            lasers::draw,
+            ui::draw_healthbar,
+            ui::draw_hud,
+            particles::draw,
+        )
             .in_set(AppStage::Draw)
             .run_if(in_state(AppState::Game)),
     );
