@@ -23,8 +23,8 @@ use system_sets::AppStage;
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 pub enum AppState {
-    #[default]
     Game,
+    #[default]
     Menu,
     DeathScreen,
 }

@@ -1,6 +1,10 @@
 use std::default;
 
-use bevy::{asset::meta::Settings, prelude::*};
+use bevy::{
+    asset::meta::Settings,
+    core_pipeline::{bloom::BloomSettings, tonemapping::Tonemapping},
+    prelude::*,
+};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
@@ -15,9 +19,9 @@ struct GameSettings {
     entities_quantity: EntitiesQuantity,
 }
 
-#[derive(Component, Default, EnumIter)]
+#[derive(Component, Default, EnumIter, Clone, Copy, PartialEq)]
 pub enum Difficulty {
-    Unkillable,
+    GodMode,
     Easy,
     #[default]
     Normal,
@@ -28,7 +32,7 @@ pub enum Difficulty {
 impl Difficulty {
     fn as_str(&self) -> &'static str {
         match self {
-            Difficulty::Unkillable => "Unkillable",
+            Difficulty::GodMode => "God Mode",
             Difficulty::Easy => "Easy",
             Difficulty::Normal => "Normal",
             Difficulty::Hard => "Hard",
@@ -49,6 +53,7 @@ pub enum EntitiesQuantity {
 pub struct PlayButton;
 
 pub fn setup(app: &mut App) {
+    app.insert_resource(GameSettings::default());
     app.add_systems(OnEnter(AppState::DeathScreen), on_death);
 
     app.add_systems(OnEnter(AppState::Menu), setup_menu);
@@ -60,7 +65,7 @@ fn on_death(mut next_state: ResMut<NextState<AppState>>) {
     next_state.set(AppState::Menu);
 }
 
-fn setup_menu(mut commands: Commands) {
+fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     info!("Setup Menu !");
 
     commands.spawn(Camera2dBundle::default());
@@ -74,10 +79,13 @@ fn setup_menu(mut commands: Commands) {
                     height: Val::Percent(100.),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
+                    flex_direction: FlexDirection::Column,
                     ..default()
                 },
+                background_color: Color::WHITE.into(),
                 ..default()
             },
+            UiImage::new(asset_server.load("nasa_milky_way.png")),
             Menu {},
         ))
         .id();
@@ -87,7 +95,7 @@ fn setup_menu(mut commands: Commands) {
             style: Style {
                 // center button
                 width: Val::Percent(100.),
-                height: Val::Percent(100.),
+                height: Val::Percent(30.),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 ..default()
@@ -101,15 +109,20 @@ fn setup_menu(mut commands: Commands) {
             .spawn((
                 ButtonBundle {
                     style: Style {
-                        width: Val::Px(150.),
-                        height: Val::Px(65.),
-                        // horizontally center child text
-                        justify_content: JustifyContent::Center,
-                        // vertically center child text
-                        align_items: AlignItems::Center,
+                        margin: UiRect {
+                            left: Val::Px(10.),
+                            right: Val::Px(10.),
+                            ..Default::default()
+                        },
+                        padding: UiRect {
+                            left: Val::Px(10.),
+                            right: Val::Px(10.),
+                            top: Val::Px(10.),
+                            bottom: Val::Px(10.),
+                        },
                         ..default()
                     },
-                    background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                    background_color: Color::NONE.into(),
                     ..default()
                 },
                 difficulty,
@@ -119,12 +132,16 @@ fn setup_menu(mut commands: Commands) {
                     difficulty.as_str(),
                     TextStyle {
                         font_size: 40.0,
-                        color: Color::rgb(0.9, 0.9, 0.9),
+                        color: Color::rgb(5.0, 5.0, 5.0),
                         ..default()
                     },
                 ));
             })
             .id();
+
+        commands
+            .entity(difficulty_menu)
+            .add_child(difficulty_button);
     }
 
     commands.entity(menu).add_child(difficulty_menu);
@@ -151,11 +168,12 @@ fn setup_menu(mut commands: Commands) {
                 "Play",
                 TextStyle {
                     font_size: 40.0,
-                    color: Color::rgb(0.9, 0.9, 0.9),
+                    color: Color::rgb(5.0, 5.0, 5.0),
                     ..default()
                 },
             ));
-        });
+        })
+        .id();
 
     commands.entity(menu).add_child(play_button);
 }
@@ -170,7 +188,9 @@ fn update_menu(
         (&Interaction, &Difficulty),
         (Changed<Interaction>, With<Button>),
     >,
+    mut difficulty_button: Query<(&mut Children, &Difficulty)>,
     mut settings: ResMut<GameSettings>,
+    mut text_query: Query<&mut Text>,
 ) {
     for interaction in &mut play_button_interraction {
         match *interaction {
@@ -184,13 +204,17 @@ fn update_menu(
     for (interaction, difficulty) in &mut difficulty_button_interraction {
         match *interaction {
             Interaction::Pressed => {
-                // Change old difficulty button's color
-
                 settings.difficulty = *difficulty;
-                // Change new difficulty button's color
             }
-            Interaction::Hovered => {}
             _ => {}
+        }
+    }
+    for (children, difficulty) in &mut difficulty_button {
+        let mut text = text_query.get_mut(children[0]).unwrap();
+
+        text.sections[0].style.color = match *difficulty == settings.difficulty {
+            true => Color::rgb(5.0, 5.0, 5.0),
+            false => Color::rgb(0.15, 0.15, 0.15),
         }
     }
 }
