@@ -7,13 +7,13 @@ use crate::{
     impulses_aggregator::AddExternalImpulse,
     lasers::{self, Laser, LaserAbility, LaserOrigin},
     player::PlayerMarker,
+    thruster::Thruster,
 };
 
 const DRIVE_ENGINE_IMPULSE: f32 = 2.0;
-const LASER_KNOCKBACK_IMPULSE: f32 = 50.0;
 const ROTATION_MUL: f32 = 15.0;
 
-pub const ALIEN_SHIP_LASER_COOLDOWN_S: f32 = 0.5;
+pub const ALIEN_SHIP_LASER_COOLDOWN_S: f32 = 0.25;
 
 const MAX_SHOOT_DISTANCE: f32 = 1000.0;
 const MAX_SHOOT_THETA: f32 = PI / 8.0;
@@ -28,7 +28,16 @@ pub fn update(
     time: Res<Time>,
     mut impulses: EventWriter<AddExternalImpulse>,
     player: Query<&Transform, With<PlayerMarker>>,
-    mut query: Query<(Entity, &Transform, &Velocity, &mut LaserAbility), With<AlienShipMarker>>,
+    mut query: Query<
+        (
+            Entity,
+            &Transform,
+            &Velocity,
+            &mut LaserAbility,
+            &mut Thruster,
+        ),
+        With<AlienShipMarker>,
+    >,
 ) {
     // The actual AI is going to be a bit tricky.
     // We'll at least have to implement a basic PID control loop.
@@ -36,8 +45,7 @@ pub fn update(
     // For now, it is very dumb. It aims at the player and accelerates if it points in kinda in the player direction.
 
     if let Ok(player_t) = player.get_single() {
-        for (entity, t, v, mut laser_ability) in query.iter_mut() {
-            let mut linear_impulse = Vec2::ZERO;
+        for (entity, t, v, mut laser_ability, mut thruster) in query.iter_mut() {
             let mut angular_impulse = 0.0;
 
             let local_forward = t.up().xy();
@@ -51,7 +59,9 @@ pub fn update(
                 let laser_angle = local_forward.y.atan2(local_forward.x);
                 lasers::spawn(
                     &mut commands,
-                    t.translation.xy() + t.up().xy().normalize() * 40.0,
+                    t.translation.xy()
+                        + v.linvel * time.delta_seconds()
+                        + t.up().xy().normalize() * 40.0,
                     local_forward.rotate(Vec2 { x: 1500.0, y: 0.0 }) + v.linvel,
                     laser_angle,
                     Laser {
@@ -61,10 +71,11 @@ pub fn update(
                     },
                 );
                 laser_ability.last_shot = Some(time.elapsed_seconds());
-                linear_impulse.x -= LASER_KNOCKBACK_IMPULSE;
             }
             if orientation_to_player.abs() < MAX_DRIVE_THETA {
-                linear_impulse.x += DRIVE_ENGINE_IMPULSE;
+                thruster.rampup(time.delta_seconds());
+            } else {
+                thruster.shutoff(time.delta_seconds());
             }
 
             // Let's make the aliens dumb. But not TOO dumb.
@@ -98,7 +109,7 @@ pub fn update(
             angular_impulse += torque_sign * DRIVE_ENGINE_IMPULSE * ROTATION_MUL;
             impulses.send(AddExternalImpulse {
                 entity,
-                impulse: local_forward.rotate(linear_impulse),
+                impulse: Vec2::ZERO,
                 torque_impulse: angular_impulse,
             });
         }

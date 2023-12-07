@@ -7,7 +7,7 @@ use bevy_rapier2d::{
 };
 use bevy_vector_shapes::{
     painter::ShapePainter,
-    shapes::{Cap, DiscPainter, LinePainter, RectPainter},
+    shapes::{Cap, DiscPainter, LinePainter, RectPainter, ThicknessType},
 };
 use colorgrad::CustomGradient;
 
@@ -298,7 +298,7 @@ pub fn draw_hud(
                     };
                     painter.color =
                         Color::rgba(color.r as f32, color.g as f32, color.b as f32, alpha);
-                    painter.thickness = ((i as f32 / max_segments).powf(3.0) * 30.0).max(0.5);
+                    painter.thickness = ((i as f32 / max_segments).powf(3.0) * 15.0).max(0.5);
                     painter.line(a.extend(0.0), b.extend(0.0));
                 }
             }

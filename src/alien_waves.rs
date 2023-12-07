@@ -13,6 +13,7 @@ use crate::{
     healthpoints::HealthPoints,
     lasers::LaserAbility,
     player::PlayerMarker,
+    thruster::Thruster,
 };
 use rand::distributions::Uniform;
 
@@ -63,6 +64,13 @@ pub fn update(
                     HealthPoints {
                         max: 10.0,
                         current: 10.0,
+                    },
+                    Thruster {
+                        max_thrust: 4.0,
+                        current_thrust: 0.0,
+                        rampup_rate: 2.0,
+                        shutoff_rate: 7.0,
+                        ignition_thrust: 2.0,
                     },
                     LaserAbility {
                         last_shot: None,

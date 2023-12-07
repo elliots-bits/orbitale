@@ -16,7 +16,6 @@ use crate::{
 const PLAYER_MASS: f32 = 4.0;
 const DRIVE_ENGINE_MAX_IMPULSE: f32 = 8.0 * PLAYER_MASS;
 const DRIVE_ENGINE_INIT_IMPULSE: f32 = 3.0 * PLAYER_MASS;
-const LASER_KNOCKBACK_IMPULSE: f32 = 0.0 * PLAYER_MASS;
 const ROTATION_IMPULSE: f32 = 6.0 * DRIVE_ENGINE_MAX_IMPULSE;
 
 const LASER_COOLDOWN_S: f32 = 0.02;
@@ -45,7 +44,6 @@ pub fn control(
     if let Ok((entity, mut laser_ability, mut thruster, transform, velocity)) =
         player.get_single_mut()
     {
-        let mut linear_impulse = Vec2::ZERO;
         let mut angular_impulse = 0.0;
         if keys.pressed(KeyCode::Up) {
             thruster.rampup(time.delta_seconds());
@@ -75,12 +73,11 @@ pub fn control(
                 },
             );
             laser_ability.last_shot = Some(time.elapsed_seconds());
-            linear_impulse.x -= LASER_KNOCKBACK_IMPULSE;
         }
 
         impulses.send(AddExternalImpulse {
             entity,
-            impulse: local_forward.rotate(linear_impulse),
+            impulse: Vec2::ZERO,
             torque_impulse: angular_impulse,
         });
     }
