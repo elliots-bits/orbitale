@@ -46,9 +46,9 @@ pub fn control(
     {
         let mut angular_impulse = 0.0;
         if keys.pressed(KeyCode::Up) {
-            thruster.rampup(time.delta_seconds());
+            thruster.throttle(time.delta_seconds());
         } else {
-            thruster.shutoff(time.delta_seconds());
+            thruster.release(time.delta_seconds());
         }
         if keys.pressed(KeyCode::Right) {
             angular_impulse -= ROTATION_IMPULSE;

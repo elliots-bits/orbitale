@@ -20,6 +20,20 @@ const MAX_SHOOT_THETA: f32 = PI / 8.0;
 const MAX_DRIVE_THETA: f32 = PI / 8.0;
 const MIN_ROTATION_THETA: f32 = PI / 32.0; // The aliens are unbeatable if they aim directly at the player
 
+/*
+Draft outline of the ships' AI:
+
+Every couple of seconds, the ship's trajectory will be simulated.
+
+When the ship is far from the player, its behavior will depend on current the trajectory:
+- Crashing into a celestial body -> execute a collision avoidance maneuver
+- No crash planned: maneuver to intersect with player (accelerate towards player & minimize encounter distance, then start decelerating at the right time to match velocities when close to the player)
+
+When the ship is near the player, it will ignore the planned trajectory and focus on attacking the player.
+This allows the player to trick the enemy into crashing or being slingshot while it's attacking.
+
+*/
+
 #[derive(Component)]
 pub struct AlienShipMarker;
 
@@ -73,9 +87,9 @@ pub fn update(
                 laser_ability.last_shot = Some(time.elapsed_seconds());
             }
             if orientation_to_player.abs() < MAX_DRIVE_THETA {
-                thruster.rampup(time.delta_seconds());
+                thruster.throttle(time.delta_seconds());
             } else {
-                thruster.shutoff(time.delta_seconds());
+                thruster.release(time.delta_seconds());
             }
 
             // Let's make the aliens dumb. But not TOO dumb.

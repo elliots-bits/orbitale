@@ -12,7 +12,7 @@ pub struct Thruster {
 }
 
 impl Thruster {
-    pub fn rampup(&mut self, dt: f32) {
+    pub fn throttle(&mut self, dt: f32) {
         self.current_thrust = if self.current_thrust < self.ignition_thrust {
             self.ignition_thrust
         } else {
@@ -20,7 +20,7 @@ impl Thruster {
         }
     }
 
-    pub fn shutoff(&mut self, dt: f32) {
+    pub fn release(&mut self, dt: f32) {
         let new_thrust: f32 = self.current_thrust * self.shutoff_rate.powf(-dt);
         self.current_thrust = new_thrust.max(0.0)
     }
