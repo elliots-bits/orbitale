@@ -1,26 +1,52 @@
-use bevy::{prelude::*, render::view::RenderLayers, window::PrimaryWindow};
-use bevy_rapier2d::{
-    dynamics::Velocity,
-    geometry::{Collider, ColliderMassProperties},
-};
-use bevy_vector_shapes::{
-    painter::ShapePainter,
-    shapes::{DiscPainter, LinePainter, RectPainter, ThicknessType},
-};
-use colorgrad::CustomGradient;
+use std::default;
 
-use crate::{
-    alien_ship::AlienShipMarker,
-    camera::{GameCameraMarker, UI_LAYER},
-    celestial_body::CelestialBodyMarker,
-    gravity::plan_course,
-    healthpoints::HealthPoints,
-    player::PlayerMarker,
-    AppState,
-};
+use bevy::{asset::meta::Settings, prelude::*};
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
+
+use crate::AppState;
 
 #[derive(Component)]
 struct Menu;
+
+#[derive(Resource, Default)]
+struct GameSettings {
+    difficulty: Difficulty,
+    entities_quantity: EntitiesQuantity,
+}
+
+#[derive(Component, Default, EnumIter)]
+pub enum Difficulty {
+    Unkillable,
+    Easy,
+    #[default]
+    Normal,
+    Hard,
+    Impossible,
+}
+
+impl Difficulty {
+    fn as_str(&self) -> &'static str {
+        match self {
+            Difficulty::Unkillable => "Unkillable",
+            Difficulty::Easy => "Easy",
+            Difficulty::Normal => "Normal",
+            Difficulty::Hard => "Hard",
+            Difficulty::Impossible => "Impossible",
+        }
+    }
+}
+
+#[derive(Component, Default, EnumIter)]
+pub enum EntitiesQuantity {
+    Some,
+    #[default]
+    ALot,
+    TooMuch,
+}
+
+#[derive(Component)]
+pub struct PlayButton;
 
 pub fn setup(app: &mut App) {
     app.add_systems(OnEnter(AppState::DeathScreen), on_death);
@@ -39,7 +65,7 @@ fn setup_menu(mut commands: Commands) {
 
     commands.spawn(Camera2dBundle::default());
 
-    commands
+    let menu = commands
         .spawn((
             NodeBundle {
                 style: Style {
@@ -54,9 +80,26 @@ fn setup_menu(mut commands: Commands) {
             },
             Menu {},
         ))
-        .with_children(|parent| {
-            parent
-                .spawn(ButtonBundle {
+        .id();
+
+    let difficulty_menu = commands
+        .spawn((NodeBundle {
+            style: Style {
+                // center button
+                width: Val::Percent(100.),
+                height: Val::Percent(100.),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            ..default()
+        },))
+        .id();
+
+    for difficulty in Difficulty::iter() {
+        let difficulty_button = commands
+            .spawn((
+                ButtonBundle {
                     style: Style {
                         width: Val::Px(150.),
                         height: Val::Px(65.),
@@ -68,35 +111,86 @@ fn setup_menu(mut commands: Commands) {
                     },
                     background_color: Color::rgb(0.15, 0.15, 0.15).into(),
                     ..default()
-                })
-                .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section(
-                        "Play",
-                        TextStyle {
-                            font_size: 40.0,
-                            color: Color::rgb(0.9, 0.9, 0.9),
-                            ..default()
-                        },
-                    ));
-                });
+                },
+                difficulty,
+            ))
+            .with_children(|parent| {
+                parent.spawn(TextBundle::from_section(
+                    difficulty.as_str(),
+                    TextStyle {
+                        font_size: 40.0,
+                        color: Color::rgb(0.9, 0.9, 0.9),
+                        ..default()
+                    },
+                ));
+            })
+            .id();
+    }
+
+    commands.entity(menu).add_child(difficulty_menu);
+
+    let play_button = commands
+        .spawn((
+            ButtonBundle {
+                style: Style {
+                    width: Val::Px(150.),
+                    height: Val::Px(65.),
+                    // horizontally center child text
+                    justify_content: JustifyContent::Center,
+                    // vertically center child text
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                ..default()
+            },
+            PlayButton,
+        ))
+        .with_children(|parent| {
+            parent.spawn(TextBundle::from_section(
+                "Play",
+                TextStyle {
+                    font_size: 40.0,
+                    color: Color::rgb(0.9, 0.9, 0.9),
+                    ..default()
+                },
+            ));
         });
+
+    commands.entity(menu).add_child(play_button);
 }
 
 fn update_menu(
     mut next_state: ResMut<NextState<AppState>>,
-    mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<Button>)>,
+    mut play_button_interraction: Query<
+        &Interaction,
+        (Changed<Interaction>, With<Button>, With<PlayButton>),
+    >,
+    mut difficulty_button_interraction: Query<
+        (&Interaction, &Difficulty),
+        (Changed<Interaction>, With<Button>),
+    >,
+    mut settings: ResMut<GameSettings>,
 ) {
-    for interaction in &mut interaction_query {
+    for interaction in &mut play_button_interraction {
         match *interaction {
             Interaction::Pressed => {
                 next_state.set(AppState::Game);
             }
-            _ => {} // Interaction::Hovered => {
-                    //     *color = HOVERED_BUTTON.into();
-                    // }
-                    // Interaction::None => {
-                    //     *color = NORMAL_BUTTON.into();
-                    // }
+            Interaction::Hovered => {}
+            _ => {}
+        }
+    }
+    for (interaction, difficulty) in &mut difficulty_button_interraction {
+        match *interaction {
+            Interaction::Pressed => {
+                // Change old difficulty button's color
+
+                settings.difficulty = *difficulty;
+                // Change new difficulty button's color
+            }
+            Interaction::Hovered => {}
+            _ => {}
         }
     }
 }
