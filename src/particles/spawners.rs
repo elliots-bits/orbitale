@@ -2,6 +2,7 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 use bevy_rapier2d::dynamics::Velocity;
+use colorgrad::CustomGradient;
 use rand::{
     distributions::{Standard, Uniform},
     Rng,
@@ -19,7 +20,6 @@ pub fn spawn_thruster_particles(
     let mut rng = rand::thread_rng();
     let max_angle_at_lowest_thrust = PI / 2.0;
     let max_particle_speed = 1000.0;
-
     for (transform, velocity, thruster) in ships.iter() {
         let max_angle_at_current_thrust = (max_angle_at_lowest_thrust
             * (1.0 - (thruster.current_thrust / thruster.max_thrust)).powf(0.6))
@@ -59,14 +59,24 @@ pub fn spawn_thruster_particles(
             commands.spawn((
                 TransformBundle::from_transform(Transform::from_translation(pos.extend(-1.0))),
                 Particle {
-                    lifetime: rng.gen::<f32>().abs().powf(2.0) * 0.66 + 0.2,
+                    lifetime: rng.gen::<f32>().abs().powf(2.0) * 0.33 + 0.2,
                     spawned_at: time.elapsed_seconds(),
                     // velocity: vel,
                     kind: ParticleKind::Combustion {
                         init_radius: 1.0,
                         end_radius: radius,
-                        start_color: Color::hex("60E0FFFF").unwrap(),
-                        end_color: Color::hex("FF000000").unwrap(),
+                        color: CustomGradient::new()
+                            .colors(&[
+                                colorgrad::Color::new(0.0, 0.5, 1.0, 1.0),
+                                colorgrad::Color::new(0.0, 0.25, 0.75, 0.75),
+                                colorgrad::Color::new(1.0, 1.0, 0.4, 0.5),
+                                colorgrad::Color::new(1.0, 0.0, 0.0, 0.5),
+                                colorgrad::Color::new(1.0, 1.0, 1.0, 0.25),
+                                colorgrad::Color::new(1.0, 1.0, 1.0, 0.0),
+                            ])
+                            .interpolation(colorgrad::Interpolation::Basis)
+                            .build()
+                            .unwrap(),
                     },
                 },
                 Velocity {

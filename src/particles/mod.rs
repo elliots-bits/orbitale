@@ -20,14 +20,12 @@ pub enum ParticleKind {
     Combustion {
         init_radius: f32,
         end_radius: f32,
-        start_color: Color,
-        end_color: Color,
+        color: colorgrad::Gradient,
     },
     Spark {
         init_size: Vec2,
         end_size: Vec2,
-        start_color: Color,
-        end_color: Color,
+        color: colorgrad::Gradient,
     },
 }
 
@@ -65,24 +63,34 @@ pub fn draw(mut painter: ShapePainter, time: Res<Time>, particles: Query<(&Parti
         painter.hollow = false;
         let lifetime_frac =
             ((time.elapsed_seconds() - particle.spawned_at) / particle.lifetime).clamp(0.0, 1.0);
-        match particle.kind {
+        match &particle.kind {
             ParticleKind::Combustion {
                 init_radius,
                 end_radius,
-                start_color,
-                end_color,
+                color,
             } => {
-                painter.color = color_lerp(start_color, end_color, lifetime_frac);
-                painter.circle(lerp(init_radius, end_radius, lifetime_frac));
+                let color = color.at(lifetime_frac as f64);
+                painter.color = Color::rgba(
+                    color.r as f32,
+                    color.g as f32,
+                    color.b as f32,
+                    color.a as f32,
+                );
+                painter.circle(lerp(*init_radius, *end_radius, lifetime_frac.powf(2.0)));
             }
             ParticleKind::Spark {
                 init_size,
                 end_size,
-                start_color,
-                end_color,
+                color,
             } => {
-                painter.color = color_lerp(start_color, end_color, lifetime_frac);
-                painter.rect(init_size.lerp(end_size, lifetime_frac));
+                let color = color.at(lifetime_frac as f64);
+                painter.color = Color::rgba(
+                    color.r as f32,
+                    color.g as f32,
+                    color.b as f32,
+                    color.a as f32,
+                );
+                painter.rect(init_size.lerp(*end_size, lifetime_frac));
             }
         }
     }
@@ -90,13 +98,4 @@ pub fn draw(mut painter: ShapePainter, time: Res<Time>, particles: Query<(&Parti
 
 fn lerp(a: f32, b: f32, x: f32) -> f32 {
     a + x * (b - a)
-}
-
-fn color_lerp(a: Color, b: Color, x: f32) -> Color {
-    Color::rgba(
-        lerp(a.r(), b.r(), x),
-        lerp(a.g(), b.g(), x),
-        lerp(a.b(), b.b(), x),
-        lerp(a.a(), b.a(), x),
-    )
 }
