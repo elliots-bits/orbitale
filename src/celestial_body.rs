@@ -1,17 +1,12 @@
-use std::{collections::HashMap, f32::consts::PI};
+use std::f32::consts::PI;
 
-use bevy::{prelude::*, hierarchy};
+use bevy::prelude::*;
 use bevy_rapier2d::{
     dynamics::{Ccd, RigidBody},
     geometry::{ActiveEvents, Collider, ColliderMassProperties},
 };
 
 use crate::{camera::game_layer, gravity::AttractingBody};
-
-pub enum CelestialBodyDynamics {
-    Static(Vec2),
-    CircularOrbit { r: f32, theta: f32, freq: f32 },
-}
 
 #[derive(Component)]
 pub struct CelestialBodyMarker;
@@ -22,42 +17,71 @@ pub struct OrbitHierarchy {
 }
 
 pub struct OrbitHierarchyNode {
-    pub dynamics: CelestialBodyDynamics,
+    pub dynamics: CircularOrbitChain,
     pub children: Vec<OrbitHierarchyNode>,
 }
 
 impl OrbitHierarchyNode {
-    pub fn build(dynamics: CelestialBodyDynamics) -> Self {
+    pub fn start(pos: Vec2) -> Self {
         Self {
-            dynamics,
+            dynamics: CircularOrbitChain {
+                origin: pos,
+                chain: vec![],
+            },
             children: vec![],
         }
     }
 
-    pub fn with_child(&mut self, dynamics: CelestialBodyDynamics) -> (&OrbitHierarchyNode, Option<CircularOrbitChain>) {
-        let child = Self::build(dynamics);
+    pub fn with_child(&mut self, orbit: CircularOrbitDef) -> &mut OrbitHierarchyNode {
+        let mut chain = self.dynamics.chain.clone();
+        chain.push(orbit);
+        let child = OrbitHierarchyNode {
+            dynamics: CircularOrbitChain {
+                origin: self.dynamics.origin,
+                chain,
+            },
+            children: vec![],
+        };
         self.children.push(child);
-        // &child
+        self.children.last_mut().unwrap()
     }
 }
 
-#[derive(Component)]
+#[derive(Copy, Clone)]
+pub struct CircularOrbitDef {
+    theta: f32,
+    radius: f32,
+    freq: f32,
+}
+
+#[derive(Component, Clone)]
 pub struct CircularOrbitChain {
     pub origin: Vec2,
-    pub chain: Vec<(f32, f32, f32)>,
+    pub chain: Vec<CircularOrbitDef>,
 }
 
 impl CircularOrbitChain {
+    pub fn update(&mut self, dt: f32) {
+        for orbit in self.chain.iter_mut() {
+            orbit.theta = (orbit.theta + (dt * orbit.freq)) % (PI * 2.0);
+        }
+    }
+
     pub fn pos(&self, dt: f32) -> Vec2 {
-        let mut pos = self.origin;
-        self.chain
-            .iter()
-            .fold(self.origin, |pos, (r, theta, freq)| {
+        self.chain.iter().fold(
+            self.origin,
+            |pos,
+             CircularOrbitDef {
+                 radius,
+                 theta,
+                 freq,
+             }| {
                 pos + Vec2 {
-                    x: (theta * freq).cos() * r,
-                    y: (theta * freq).sin() * r,
+                    x: (theta + dt * freq).cos() * radius,
+                    y: (theta + dt * freq).sin() * radius,
                 }
-            })
+            },
+        )
     }
 }
 
@@ -65,110 +89,85 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // This is this environment generation.
     let sprite_radius = 585.0;
 
-    let root = OrbitHierarchyNode::build(CelestialBodyDynamics::Static(()))
+    let mut parent_moon_node = OrbitHierarchyNode::start(Vec2 {
+        x: 10000.0,
+        y: 10000.0,
+    });
+    commands.spawn((
+        CelestialBodyMarker,
+        parent_moon_node.dynamics.clone(),
+        SpriteBundle {
+            texture: asset_server.load("mike-petrucci-moon.png"),
+            transform: Transform::default().with_scale(Vec3::splat(5.0)),
+            ..default()
+        },
+        Ccd::enabled(),
+        RigidBody::Fixed,
+        AttractingBody,
+        Collider::ball(sprite_radius),
+        ColliderMassProperties::Mass(5e7),
+        ActiveEvents::COLLISION_EVENTS,
+        game_layer(),
+    ));
 
-    let parent_moon_id = commands
-        .spawn((
-            CelestialBodyMarker,
-            SpriteBundle {
-                texture: asset_server.load("mike-petrucci-moon.png"),
-                transform: Transform::from_translation(Vec3::new(10000.0, 10000.0, 0.0))
-                    .with_scale(Vec3::splat(5.0)),
-                ..default()
-            },
-            // FixedOrbit {
-            //     parent: sun_id,
-            //     radius: 140000.0,
-            //     theta: 0.0,
-            //     period: 3000.0,
-            // },
-            Ccd::enabled(),
-            RigidBody::Fixed,
-            AttractingBody,
-            Collider::ball(radius),
-            ColliderMassProperties::Mass(5e7),
-            ActiveEvents::COLLISION_EVENTS,
-            game_layer(),
-        ))
-        .id();
+    let child_moon_node = parent_moon_node.with_child(CircularOrbitDef {
+        theta: 0.0,
+        radius: 18000.0,
+        freq: 1.0 / 300.0,
+    });
+    commands.spawn((
+        CelestialBodyMarker,
+        SpriteBundle {
+            texture: asset_server.load("mike-petrucci-moon.png"),
+            transform: Transform::from_scale(Vec3::splat(1.5)),
+            ..default()
+        },
+        child_moon_node.dynamics.clone(),
+        Ccd::enabled(),
+        RigidBody::Fixed,
+        AttractingBody,
+        Collider::ball(sprite_radius),
+        ColliderMassProperties::Mass(1e7),
+        ActiveEvents::COLLISION_EVENTS,
+        game_layer(),
+    ));
 
-    let child_moon_id = commands
-        .spawn((
-            CelestialBodyMarker,
-            SpriteBundle {
-                texture: asset_server.load("mike-petrucci-moon.png"),
-                transform: Transform::from_scale(Vec3::splat(1.5)),
-                ..default()
-            },
-            FixedOrbit {
-                parent: parent_moon_id,
-                radius: 18000.0,
-                theta: 0.0,
-                period: 300.0,
-            },
-            Ccd::enabled(),
-            RigidBody::Fixed,
-            AttractingBody,
-            Collider::ball(radius),
-            ColliderMassProperties::Mass(1e7),
-            ActiveEvents::COLLISION_EVENTS,
-            game_layer(),
-        ))
-        .id();
-
-    let child_child_moon_id = commands
-        .spawn((
-            CelestialBodyMarker,
-            FixedOrbit {
-                parent: child_moon_id,
-                radius: 7000.0,
-                theta: 0.0,
-                period: 40.0,
-            },
-            SpriteBundle {
-                texture: asset_server.load("mike-petrucci-moon.png"),
-                transform: Transform::from_scale(Vec3::splat(0.5)),
-                ..default()
-            },
-            Ccd::enabled(),
-            RigidBody::Fixed,
-            AttractingBody,
-            Collider::ball(radius),
-            ColliderMassProperties::Mass(1.5e6),
-            ActiveEvents::COLLISION_EVENTS,
-            game_layer(),
-        ))
-        .id();
+    let child_child_moon_node = child_moon_node.with_child(CircularOrbitDef {
+        theta: 0.0,
+        radius: 7000.0,
+        freq: 1.0 / 40.0,
+    });
+    commands.spawn((
+        CelestialBodyMarker,
+        child_child_moon_node.dynamics.clone(),
+        SpriteBundle {
+            texture: asset_server.load("mike-petrucci-moon.png"),
+            transform: Transform::from_scale(Vec3::splat(0.5)),
+            ..default()
+        },
+        Ccd::enabled(),
+        RigidBody::Fixed,
+        AttractingBody,
+        Collider::ball(sprite_radius),
+        ColliderMassProperties::Mass(1.5e6),
+        ActiveEvents::COLLISION_EVENTS,
+        game_layer(),
+    ));
 
     commands.insert_resource(OrbitHierarchy {
-        roots: vec![OrbitHierarchyNode {
-            entity: parent_moon_id,
-            children: vec![OrbitHierarchyNode {
-                entity: child_moon_id,
-                children: vec![OrbitHierarchyNode {
-                    entity: child_child_moon_id,
-                    children: vec![],
-                }],
-            }],
-        }],
-    })
+        roots: vec![parent_moon_node],
+    });
 }
 
 pub fn update(
     time: Res<Time>,
-    mut bodies: Query<(Entity, &mut Transform, Option<&mut FixedOrbit>), With<CelestialBodyMarker>>,
+    mut bodies: Query<(&mut Transform, &mut CircularOrbitChain), With<CelestialBodyMarker>>,
 ) {
-    let mut positions = HashMap::<Entity, Vec2>::new();
-    for (e, t, _) in bodies.iter() {
-        positions.insert(e, t.translation.xy());
+    for (_, mut orbit) in bodies.iter_mut() {
+        orbit.update(time.delta_seconds());
     }
-
-    for (_, mut transform, orbit) in bodies.iter_mut() {
-        if let Some(mut orbit) = orbit {
-            orbit.update(time.delta_seconds());
-            let parent_pos = positions.get(&orbit.parent).unwrap();
-            transform.translation = (*parent_pos + orbit.pos()).extend(0.0);
-        }
+    for (mut transform, orbit) in bodies.iter_mut() {
+        transform.translation = orbit.pos(0.0).extend(0.0);
     }
 }
 
