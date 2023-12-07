@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use bevy::prelude::*;
 use bevy_rapier2d::{
     dynamics::Velocity,

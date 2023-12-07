@@ -37,6 +37,46 @@ This allows the player to trick the enemy into crashing or being slingshot while
 #[derive(Component)]
 pub struct AlienShipMarker;
 
+#[derive(Component)]
+pub struct OrientationController {
+    pub rotation_target: Option<f32>,
+    pub torque_available: f32,
+}
+
+impl OrientationController {
+    fn to_bounded_positive_angle(a: f32) -> f32 {
+        let a = a % (2.0 * PI);
+        if a < 0.0 {
+            a + 2.0 * PI
+        } else {
+            a
+        }
+    }
+
+    pub fn set(&mut self, target: f32) {
+        self.rotation_target = Some(OrientationController::to_bounded_positive_angle(target));
+    }
+
+    pub fn unset(&mut self) {
+        self.rotation_target = None;
+    }
+
+    fn time_to_target(&self, current_orientation: f32, angular_velocity: f32) -> Option<f32> {
+        let current_orientation =
+            OrientationController::to_bounded_positive_angle(current_orientation);
+        self.rotation_target.map(|target| {
+            let sec_per_turn = 2.0 * PI / angular_velocity;
+            let arc_to_cover = (target - current_orientation);
+            let signed_duration = arc_to_cover / angular_velocity;
+            if signed_duration < 0.0 {
+                signed_duration + sec_per_turn
+            } else {
+                signed_duration
+            }
+        })
+    }
+}
+
 pub fn update(
     mut commands: Commands,
     time: Res<Time>,
