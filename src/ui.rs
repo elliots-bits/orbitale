@@ -14,7 +14,7 @@ use colorgrad::CustomGradient;
 use crate::{
     alien_ship::AlienShipMarker,
     camera::{GameCameraMarker, UI_LAYER},
-    celestial_body::CelestialBodyMarker,
+    celestial_body::{CelestialBodyMarker, CircularOrbitChain},
     gravity::plan_course,
     healthpoints::HealthPoints,
     player::PlayerMarker,
@@ -109,7 +109,12 @@ pub fn draw_hud(
     player: Query<(&Transform, &Velocity), With<PlayerMarker>>,
     alien_ships: Query<(&Transform, &Velocity), With<AlienShipMarker>>,
     celestial_bodies: Query<
-        (&Transform, &ColliderMassProperties, &Collider),
+        (
+            &Transform,
+            &ColliderMassProperties,
+            &Collider,
+            &CircularOrbitChain,
+        ),
         With<CelestialBodyMarker>,
     >,
 ) {
@@ -193,7 +198,7 @@ pub fn draw_hud(
                 }
             }
 
-            for (at, _, collider) in celestial_bodies.iter() {
+            for (at, _, collider, _) in celestial_bodies.iter() {
                 let dp = at.translation.xy() - pt.translation.xy();
                 let dv = -pv.linvel; // Todo if needed: take body velocity into account
 
@@ -252,18 +257,14 @@ pub fn draw_hud(
         // Draw planned course
         let bodies = celestial_bodies
             .iter()
-            .map(|(transform, massprops, collider)| {
+            .map(|(_, massprops, collider, circular_orbit)| {
                 if let ColliderMassProperties::Mass(mass) = massprops {
-                    (
-                        transform.translation.xy(),
-                        *mass,
-                        collider.as_ball().unwrap().radius(),
-                    )
+                    (*mass, collider.as_ball().unwrap().radius(), circular_orbit)
                 } else {
                     panic!("Use ColliderMassProperties::Mass(x) for celestial bodies")
                 }
             })
-            .collect::<Vec<(Vec2, f32, f32)>>();
+            .collect::<Vec<(f32, f32, &CircularOrbitChain)>>();
 
         let max_dt = 30.0;
         let step_dt = 0.05;

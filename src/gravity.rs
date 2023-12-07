@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::{dynamics::Velocity, geometry::ColliderMassProperties};
 
-use crate::impulses_aggregator::AddExternalImpulse;
+use crate::{celestial_body::CircularOrbitChain, impulses_aggregator::AddExternalImpulse};
 
 const GRAVITATIONAL_CONSTANT: f32 = 32.0;
 
@@ -58,7 +58,7 @@ pub fn plan_course(
     step_dt: f32,
     mut pos: Vec2,
     mut velocity: Vec2,
-    bodies: Vec<(Vec2, f32, f32)>, // (position, mass)
+    bodies: Vec<(f32, f32, &CircularOrbitChain)>, // (mass, radius, orbit)
 ) -> CoursePlanning {
     let mut t = 0.0;
     let mut path = vec![];
@@ -67,8 +67,9 @@ pub fn plan_course(
         let mut acceleration = Vec2::ZERO;
         let mut closest_body_distance_at_step = f32::INFINITY;
 
-        for (op, m, r) in bodies.iter() {
-            let d = *op - pos;
+        for (m, r, orbit) in bodies.iter() {
+            let body_pos_at_time = orbit.pos(t);
+            let d = body_pos_at_time - pos;
             if (d.length() - r) < closest_body_distance_at_step {
                 closest_body_distance_at_step = d.length() - r;
             }
