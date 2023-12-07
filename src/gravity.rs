@@ -3,7 +3,7 @@ use bevy_rapier2d::{dynamics::Velocity, geometry::ColliderMassProperties};
 
 use crate::impulses_aggregator::AddExternalImpulse;
 
-const GRAVITATIONAL_CONSTANT: f32 = 8.0;
+const GRAVITATIONAL_CONSTANT: f32 = 32.0;
 
 #[derive(Component)]
 pub struct AttractingBody;
@@ -15,7 +15,7 @@ pub struct AffectedByGravity;
 fn gravity_formula(d: f32, m: f32) -> f32 {
     // Real spacetime is very scary, empty, and difficult to navigate.
     // This one is a little bit more intuitive.
-    GRAVITATIONAL_CONSTANT * m / d.max(1.0).powf(1.4)
+    GRAVITATIONAL_CONSTANT * m / d.max(1.0).powf(1.6)
 }
 
 pub fn update(
@@ -75,8 +75,8 @@ pub fn plan_course(
             acceleration += d.normalize() * gravity_formula(d.length(), *m);
         }
 
+        pos += rk2(velocity, acceleration, step_dt);
         velocity += acceleration * step_dt;
-        pos += velocity * step_dt;
         path.push((pos, closest_body_distance_at_step));
         t += step_dt;
 
@@ -91,4 +91,9 @@ pub fn plan_course(
         path,
         closest_flyby,
     }
+}
+
+#[inline(always)]
+fn rk2(x: Vec2, dx: Vec2, dt: f32) -> Vec2 {
+    (x * dt / 2.0) + ((x + dx * dt) * dt / 2.0)
 }

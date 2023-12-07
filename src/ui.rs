@@ -18,7 +18,6 @@ use crate::{
     gravity::plan_course,
     healthpoints::HealthPoints,
     player::PlayerMarker,
-    AppState,
 };
 
 const BAR_SIZE: Vec2 = Vec2 { x: 300.0, y: 25.0 };
@@ -29,7 +28,7 @@ const RADAR_COLOR_MAX_SPEED: f32 = 3000.0;
 const RADAR_ENTITIES_ALPHA: f32 = 0.9;
 const RADAR_CELESTIAL_BODIES_ALPHA: f32 = 0.7;
 const RADAR_CIRCLES_ALPHA: f32 = 0.6;
-const RADAR_PLANNED_COURSE_ALPHA: f32 = 0.5;
+const RADAR_PLANNED_COURSE_ALPHA: f32 = 0.4;
 
 #[derive(Resource)]
 pub struct RadarShipsColorGradient(pub colorgrad::Gradient);
@@ -230,11 +229,22 @@ pub fn draw_hud(
                     painter.hollow = true;
                     // painter.thickness = radar_size_at_distance(body_radius, r);
                     painter.thickness = (body_radius * RADAR_HUD_SCALE) + 4.0;
-                    painter.cap = Cap::Round;
+
+                    let cap_radius = painter.thickness / 2.0;
+                    let arc_covered_by_cap = radar_arc_at_distance(cap_radius, radar_r);
+                    let (cap, arc) = if arc_covered_by_cap > PI / 8.0 {
+                        (Cap::None, closest_arc)
+                    } else {
+                        (
+                            Cap::Round,
+                            (closest_arc - arc_covered_by_cap).max(PI / 64.0),
+                        )
+                    };
+                    painter.cap = cap;
                     painter.arc(
                         radar_r.max(RADAR_HUD_INNER_RADIUS + painter.thickness),
-                        -theta - closest_arc + PI / 2.0,
-                        -theta + closest_arc + PI / 2.0,
+                        -theta - arc + PI / 2.0,
+                        -theta + arc + PI / 2.0,
                     );
                 }
             }

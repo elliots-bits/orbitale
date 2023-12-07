@@ -149,7 +149,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         RigidBody::Fixed,
         AttractingBody,
         Collider::ball(sprite_radius),
-        ColliderMassProperties::Mass(1.5e6),
+        ColliderMassProperties::Mass(4e6),
         ActiveEvents::COLLISION_EVENTS,
         game_layer(),
     ));
