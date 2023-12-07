@@ -13,11 +13,13 @@ use crate::{
     thruster::Thruster,
 };
 
-const DRIVE_ENGINE_IMPULSE: f32 = 6.0;
-const LASER_KNOCKBACK_IMPULSE: f32 = 1.0;
-const ROTATION_MUL: f32 = 8.0;
+const PLAYER_MASS: f32 = 4.0;
+const DRIVE_ENGINE_MAX_IMPULSE: f32 = 8.0 * PLAYER_MASS;
+const DRIVE_ENGINE_INIT_IMPULSE: f32 = 3.0 * PLAYER_MASS;
+const LASER_KNOCKBACK_IMPULSE: f32 = 0.0 * PLAYER_MASS;
+const ROTATION_IMPULSE: f32 = 6.0 * DRIVE_ENGINE_MAX_IMPULSE;
 
-const LASER_COOLDOWN_S: f32 = 0.025;
+const LASER_COOLDOWN_S: f32 = 0.033;
 
 const STARTING_HP: f32 = 100.0;
 
@@ -51,10 +53,10 @@ pub fn control(
             thruster.shutoff(time.delta_seconds());
         }
         if keys.pressed(KeyCode::Right) {
-            angular_impulse -= DRIVE_ENGINE_IMPULSE * ROTATION_MUL;
+            angular_impulse -= ROTATION_IMPULSE;
         }
         if keys.pressed(KeyCode::Left) {
-            angular_impulse += DRIVE_ENGINE_IMPULSE * ROTATION_MUL;
+            angular_impulse += ROTATION_IMPULSE;
         }
         let local_forward = transform.up().xy();
         if keys.pressed(KeyCode::Space) && laser_ability.ready(&time) {
@@ -90,11 +92,11 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             current: STARTING_HP,
         },
         Thruster {
-            max_thrust: 8.0,
+            max_thrust: DRIVE_ENGINE_MAX_IMPULSE,
             current_thrust: 0.0,
-            rampup_rate: 1.5,
-            shutoff_rate: 5.0,
-            ignition_thrust: 3.0,
+            rampup_rate: 3.0,
+            shutoff_rate: 7.0,
+            ignition_thrust: DRIVE_ENGINE_INIT_IMPULSE,
         },
         LaserAbility {
             last_shot: None,
@@ -107,7 +109,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         Ccd::enabled(),
         RigidBody::Dynamic,
         Collider::ball(32.0),
-        ColliderMassProperties::Mass(1.0),
+        ColliderMassProperties::Mass(PLAYER_MASS),
         Damping {
             linear_damping: 0.0,
             angular_damping: 2.0,

@@ -8,6 +8,8 @@ use bevy_rapier2d::{
 
 use crate::{camera::game_layer, gravity::AttractingBody};
 
+const SYSTEM_DISTANCE_SCALE: f32 = 10000.0;
+
 #[derive(Component)]
 pub struct CelestialBodyMarker;
 
@@ -88,75 +90,89 @@ impl CircularOrbitChain {
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // This is this environment generation.
     let sprite_radius = 585.0;
+    let texture = asset_server.load("mike-petrucci-moon.png");
 
     let mut parent_moon_node = OrbitHierarchyNode::start(Vec2 {
         x: 10000.0,
         y: 10000.0,
     });
-    commands.spawn((
-        CelestialBodyMarker,
-        parent_moon_node.dynamics.clone(),
-        SpriteBundle {
-            texture: asset_server.load("mike-petrucci-moon.png"),
-            transform: Transform::default().with_scale(Vec3::splat(5.0)),
-            ..default()
-        },
-        Ccd::enabled(),
-        RigidBody::Fixed,
-        AttractingBody,
-        Collider::ball(sprite_radius),
-        ColliderMassProperties::Mass(5e7),
-        ActiveEvents::COLLISION_EVENTS,
-        game_layer(),
+    commands.spawn(gen_body_bundle(
+        &parent_moon_node,
+        5.0,
+        &texture,
+        sprite_radius,
+        5e7,
     ));
 
-    let child_moon_node = parent_moon_node.with_child(CircularOrbitDef {
-        theta: 0.0,
-        radius: 18000.0,
-        freq: 1.0 / 300.0,
-    });
-    commands.spawn((
-        CelestialBodyMarker,
-        SpriteBundle {
-            texture: asset_server.load("mike-petrucci-moon.png"),
-            transform: Transform::from_scale(Vec3::splat(1.5)),
-            ..default()
-        },
-        child_moon_node.dynamics.clone(),
-        Ccd::enabled(),
-        RigidBody::Fixed,
-        AttractingBody,
-        Collider::ball(sprite_radius),
-        ColliderMassProperties::Mass(1e7),
-        ActiveEvents::COLLISION_EVENTS,
-        game_layer(),
-    ));
+    {
+        let child_moon_node = parent_moon_node.with_child(CircularOrbitDef {
+            theta: 0.0,
+            radius: 4.0 * SYSTEM_DISTANCE_SCALE,
+            freq: 1.0 / 300.0,
+        });
+        commands.spawn(gen_body_bundle(
+            child_moon_node,
+            1.5,
+            &texture,
+            sprite_radius,
+            1e7,
+        ));
 
-    let child_child_moon_node = child_moon_node.with_child(CircularOrbitDef {
-        theta: 0.0,
-        radius: 7000.0,
-        freq: 1.0 / 40.0,
+        let child_child_moon_node = child_moon_node.with_child(CircularOrbitDef {
+            theta: 0.0,
+            radius: 1.0 * SYSTEM_DISTANCE_SCALE,
+            freq: 1.0 / 40.0,
+        });
+        commands.spawn(gen_body_bundle(
+            child_child_moon_node,
+            0.5,
+            &texture,
+            sprite_radius,
+            4e6,
+        ));
+    }
+
+    let child_2_moon_node = parent_moon_node.with_child(CircularOrbitDef {
+        theta: PI,
+        radius: 8.0 * SYSTEM_DISTANCE_SCALE,
+        freq: 1.0 / 600.0,
     });
-    commands.spawn((
-        CelestialBodyMarker,
-        child_child_moon_node.dynamics.clone(),
-        SpriteBundle {
-            texture: asset_server.load("mike-petrucci-moon.png"),
-            transform: Transform::from_scale(Vec3::splat(0.5)),
-            ..default()
-        },
-        Ccd::enabled(),
-        RigidBody::Fixed,
-        AttractingBody,
-        Collider::ball(sprite_radius),
-        ColliderMassProperties::Mass(4e6),
-        ActiveEvents::COLLISION_EVENTS,
-        game_layer(),
+    commands.spawn(gen_body_bundle(
+        child_2_moon_node,
+        2.0,
+        &texture,
+        sprite_radius,
+        2e7,
     ));
 
     commands.insert_resource(OrbitHierarchy {
         roots: vec![parent_moon_node],
     });
+}
+
+fn gen_body_bundle(
+    node: &OrbitHierarchyNode,
+    scale: f32,
+    texture: &Handle<Image>,
+    sprite_radius: f32,
+    mass: f32,
+) -> impl Bundle {
+    (
+        CelestialBodyMarker,
+        node.dynamics.clone(),
+        SpriteBundle {
+            texture: texture.clone(),
+            transform: Transform::from_scale(Vec3::splat(scale)),
+            ..default()
+        },
+        Ccd::enabled(),
+        RigidBody::Fixed,
+        AttractingBody,
+        Collider::ball(sprite_radius),
+        ColliderMassProperties::Mass(mass),
+        ActiveEvents::COLLISION_EVENTS,
+        game_layer(),
+    )
 }
 
 pub fn update(

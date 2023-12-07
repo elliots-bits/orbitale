@@ -76,8 +76,8 @@ pub fn plan_course(
             acceleration += d.normalize() * gravity_formula(d.length(), *m);
         }
 
-        pos += rk2(velocity, acceleration, step_dt);
         velocity += acceleration * step_dt;
+        pos += velocity * step_dt;
         path.push((pos, closest_body_distance_at_step));
         t += step_dt;
 
@@ -92,9 +92,4 @@ pub fn plan_course(
         path,
         closest_flyby,
     }
-}
-
-#[inline(always)]
-fn rk2(x: Vec2, dx: Vec2, dt: f32) -> Vec2 {
-    (x * dt / 2.0) + ((x + dx * dt) * dt / 2.0)
 }

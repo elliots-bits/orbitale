@@ -23,7 +23,7 @@ use crate::{
 const BAR_SIZE: Vec2 = Vec2 { x: 300.0, y: 25.0 };
 const RADAR_HUD_INNER_RADIUS: f32 = 150.0;
 const RADAR_HUD_OUTER_RADIUS: f32 = 400.0;
-const RADAR_HUD_SCALE: f32 = 1.0 / 200.0;
+const RADAR_HUD_SCALE: f32 = 1.0 / 400.0;
 const RADAR_COLOR_MAX_SPEED: f32 = 3000.0;
 const RADAR_ENTITIES_ALPHA: f32 = 0.9;
 const RADAR_CELESTIAL_BODIES_ALPHA: f32 = 0.7;
