@@ -49,6 +49,9 @@ pub enum EntitiesQuantity {
     TooMuch,
 }
 
+const PRIMARY_COLOR: Color = Color::rgb(0.95, 0.95, 0.95);
+const SECONDARY_COLOR: Color = Color::rgb(0.30, 0.30, 0.30);
+
 #[derive(Component)]
 pub struct PlayButton;
 
@@ -132,7 +135,8 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     difficulty.as_str(),
                     TextStyle {
                         font_size: 40.0,
-                        color: Color::rgb(5.0, 5.0, 5.0),
+                        font: asset_server.load("fusion-pixel-12px-proportional-latin.ttf"),
+                        color: PRIMARY_COLOR,
                         ..default()
                     },
                 ));
@@ -158,7 +162,7 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     align_items: AlignItems::Center,
                     ..default()
                 },
-                background_color: Color::rgb(0.15, 0.15, 0.15).into(),
+                background_color: SECONDARY_COLOR.into(),
                 ..default()
             },
             PlayButton,
@@ -168,7 +172,8 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 "Play",
                 TextStyle {
                     font_size: 40.0,
-                    color: Color::rgb(5.0, 5.0, 5.0),
+                    color: PRIMARY_COLOR,
+                    font: asset_server.load("fusion-pixel-12px-proportional-latin.ttf"),
                     ..default()
                 },
             ));
@@ -213,8 +218,8 @@ fn update_menu(
         let mut text = text_query.get_mut(children[0]).unwrap();
 
         text.sections[0].style.color = match *difficulty == settings.difficulty {
-            true => Color::rgb(5.0, 5.0, 5.0),
-            false => Color::rgb(0.15, 0.15, 0.15),
+            true => PRIMARY_COLOR,
+            false => SECONDARY_COLOR,
         }
     }
 }
