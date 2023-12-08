@@ -78,13 +78,17 @@ pub fn setup(app: &mut App) {
 }
 
 fn on_death(mut next_state: ResMut<NextState<AppState>>) {
+    debug!("Death menu");
     next_state.set(AppState::Menu);
 }
+
+#[derive(Component)]
+pub struct MenuCameraMarker;
 
 fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     info!("Setup Menu !");
 
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn((Camera2dBundle::default(), MenuCameraMarker));
 
     let menu = commands
         .spawn((
@@ -381,8 +385,9 @@ fn play_on_press_space(mut next_state: ResMut<NextState<AppState>>, keys: Res<In
 fn cleanup_menu(
     mut commands: Commands,
     menu_query: Query<Entity, With<Menu>>,
-    camera_query: Query<Entity, With<Camera>>,
+    camera_query: Query<Entity, With<MenuCameraMarker>>,
 ) {
+    debug!("Cleanup menu");
     commands.entity(menu_query.single()).despawn_recursive();
     commands.entity(camera_query.single()).despawn_recursive();
 }

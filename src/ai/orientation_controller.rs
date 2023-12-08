@@ -19,21 +19,22 @@ pub struct OrientationControllerQueue(pub VecDeque<Entity>);
 pub struct OrientationController {
     pub rotation_target: Option<f32>,
     pub torque_available: f32,
-    pub current_requested_torque: f32,
+    pub current_command: (f32, f32), // torque, time of stop
 }
 
 impl OrientationController {
     pub fn new(torque_available: f32) -> Self {
         Self {
             rotation_target: None,
-            current_requested_torque: 0.0,
+            current_command: (0.0, 0.0),
             torque_available,
         }
     }
 
-    pub fn update_command(&mut self, p0: f32, v0: f32) {
+    pub fn update_command(&mut self, time: &Time, p0: f32, v0: f32) {
         if self.rotation_target.is_some() {
-            self.current_requested_torque = self.torque_needed(p0, v0);
+            let (torque, dt) = self.torque_needed(p0, v0);
+            self.current_command = (torque, time.elapsed_seconds() + dt);
         }
     }
 
@@ -131,7 +132,7 @@ impl OrientationController {
         angular_velocity.abs() > STABILIZE_ANGULAR_VELOCITY_THRESHOLD
     }
 
-    pub fn torque_needed(&self, current_orientation: f32, angular_velocity: f32) -> f32 {
+    pub fn torque_needed(&self, current_orientation: f32, angular_velocity: f32) -> (f32, f32) {
         let current_orientation =
             OrientationController::to_bounded_positive_angle(current_orientation);
         // debug!("theta={}, v={}", current_orientation, angular_velocity);
@@ -139,10 +140,12 @@ impl OrientationController {
 
         if self.should_stabilize(angular_velocity) {
             // debug!("stabilizing");
-            -angular_velocity.signum() * self.torque_available
+            let t = -angular_velocity.signum() * self.torque_available;
+            let d = angular_velocity.abs() / (t / SHIP_ANGULAR_INERTIA);
+            (t, d)
         } else if (current_orientation - self.rotation_target.unwrap()).abs() < MIN_ROTATION_THETA {
             // debug!("target reached");
-            0.0
+            (0.0, 0.0)
         } else {
             let ttt_at_current_speed = self
                 .time_to_target(current_orientation, angular_velocity, 0.0)
@@ -167,10 +170,10 @@ impl OrientationController {
                 // debug!("Counterclockwise: {}", positive_ttt);
                 if positive_ttt < negative_ttt {
                     // debug!("Applying torque {}", self.torque_available);
-                    self.torque_available
+                    (self.torque_available, positive_ttt / 3.0)
                 } else {
                     // debug!("Applying torque: {}", -self.torque_available);
-                    -self.torque_available
+                    (-self.torque_available, negative_ttt / 3.0)
                 }
             } else {
                 // debug!("Executing maneuver");
@@ -182,16 +185,19 @@ impl OrientationController {
                     //     "braking, torque: {}",
                     //     self.torque_available * -angular_velocity.signum()
                     // );
-                    self.torque_available * -angular_velocity.signum()
+                    (
+                        self.torque_available * -angular_velocity.signum(),
+                        angular_velocity.abs() / (self.torque_available / SHIP_ANGULAR_INERTIA),
+                    )
                 } else if ttt_at_current_speed > 0.2 {
                     // debug!(
                     //     "accelerating, torque: {}",
                     //     self.torque_available * angular_velocity.signum()
                     // );
-                    self.torque_available * angular_velocity.signum()
+                    (self.torque_available * angular_velocity.signum(), 0.2)
                 } else {
                     // debug!("keep rotating..");
-                    0.0
+                    (0.0, 0.0)
                 }
             }
         }
@@ -199,6 +205,7 @@ impl OrientationController {
 }
 
 pub fn update_orientation_controllers_targets(
+    time: Res<Time>,
     player: Query<&Transform, With<PlayerMarker>>,
     mut queue: ResMut<OrientationControllerQueue>,
     mut ships: Query<
@@ -206,7 +213,6 @@ pub fn update_orientation_controllers_targets(
         With<AlienShipMarker>,
     >,
 ) {
-    let mut to_push_back = Vec::<Entity>::new();
     if let Ok(player_t) = player.get_single() {
         let mut updated_controllers = 0;
         while let Some(e) = queue.0.pop_front() {
@@ -218,20 +224,20 @@ pub fn update_orientation_controllers_targets(
                             let d = (player_t.translation - t.translation).xy();
                             controller.target(d.y.atan2(d.x));
                             let current_orientation = local_forward.y.atan2(local_forward.x);
-                            controller.update_command(current_orientation, v.angvel);
+                            controller.update_command(&time, current_orientation, v.angvel);
+                            // debug!(
+                            //     "set cmd: torque={}, duration={}",
+                            //     controller.current_command.0,
+                            //     controller.current_command.1 - time.elapsed_seconds()
+                            // );
                         }
                     };
-                    to_push_back.push(e);
                     updated_controllers += 1;
                 }
             } else {
                 break;
             }
         }
-    }
-
-    for e in to_push_back.iter() {
-        queue.0.push_back(*e);
     }
 }
 
@@ -241,7 +247,7 @@ pub fn test_time_to_target() {
     let mut controller = OrientationController {
         rotation_target: None,
         torque_available: 0.0,
-        current_requested_torque: 0.0,
+        current_command: (0.0, 0.0),
     };
 
     controller.target(PI * 17.0);

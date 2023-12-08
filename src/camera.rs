@@ -27,7 +27,7 @@ pub struct UICameraMarker;
 pub fn setup(app: &mut App) {
     app.add_systems(
         OnEnter(AppState::Game),
-        (initialize_game_camera, initialize_ui_camera),
+        (initialize_game_camera, initialize_ui_camera).chain(),
     );
     app.add_systems(OnExit(AppState::Game), cleanup_camera);
     app.add_systems(
@@ -137,6 +137,7 @@ fn initialize_ui_camera(mut commands: Commands) {
 }
 
 fn update_game_camera(
+    time: Res<Time>,
     mut camera: Query<
         (Entity, &Transform, &mut OrthographicProjection),
         (With<GameCameraMarker>, Without<PlayerMarker>),
@@ -147,16 +148,19 @@ fn update_game_camera(
     if let Ok((camera_entity, cam_t, mut proj)) = camera.get_single_mut() {
         if let Ok((player_t, player_v)) = player.get_single() {
             move_event_writer.send(ParallaxMoveEvent {
-                camera_move_speed: (player_t.translation - cam_t.translation).xy(),
+                camera_move_speed: ((player_v.linvel * time.delta_seconds()).extend(0.0)
+                    + player_t.translation
+                    - cam_t.translation)
+                    .xy(),
                 camera: camera_entity,
             });
-
-            // cam_t.translation = player_t.translation;
 
             let speed = player_v.linvel.length();
             let target_scale = (((speed / 600.0 - 1.0).tanh() + 1.0) / 2.0).powf(2.0) * 2.0 + 2.0;
             proj.scale = proj.scale + (target_scale - proj.scale) / 100.0;
         }
+    } else {
+        panic!("No game camera");
     }
 }
 

@@ -38,20 +38,18 @@ fn main() {
     let mut app = App::new();
 
     app.add_state::<AppState>();
-    app.add_plugins((
-        DefaultPlugins.set(LogPlugin {
-            filter: "info,wgpu_core=error,wgpu_hal=error,space_chase=debug".into(),
-            level: bevy::log::Level::DEBUG,
-        }),
-        RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(1.0),
-        ShapePlugin::default(),
-        ParallaxPlugin,
-    ));
+    app.add_plugins((DefaultPlugins.set(LogPlugin {
+        filter: "info,wgpu_core=error,wgpu_hal=error,space_chase=debug".into(),
+        level: bevy::log::Level::DEBUG,
+    }),));
+    app.add_plugins(ParallaxPlugin);
+    app.add_plugins(ShapePlugin::default());
+    app.add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(1.0));
 
+    camera::setup(&mut app);
     impulses_aggregator::setup(&mut app);
     despawn_queue::setup(&mut app);
     system_sets::setup(&mut app);
-    camera::setup(&mut app);
     menu::setup(&mut app);
     score::setup(&mut app);
 
@@ -70,7 +68,8 @@ fn main() {
             player::cleanup,
             celestial_body::cleanup,
             alien_ship::cleanup,
-        ),
+        )
+            .chain(),
     );
 
     app.add_systems(
@@ -81,7 +80,8 @@ fn main() {
             alien_waves::setup,
             celestial_body::setup,
             ai::setup,
-        ),
+        )
+            .chain(),
     );
 
     app.add_systems(

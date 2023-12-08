@@ -85,6 +85,7 @@ pub fn control(
 }
 
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    debug!("Player setup");
     commands.spawn((
         PlayerMarker,
         HealthPoints {
@@ -123,5 +124,6 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 pub fn cleanup(mut commands: Commands, query: Query<Entity, With<PlayerMarker>>) {
+    debug!("Cleanup player");
     commands.entity(query.single()).despawn_recursive();
 }

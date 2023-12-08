@@ -93,8 +93,8 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let texture = asset_server.load("mike-petrucci-moon.png");
 
     let mut parent_moon_node = OrbitHierarchyNode::start(Vec2 {
-        x: 30000.0,
-        y: 30000.0,
+        x: 100000.0,
+        y: 100000.0,
     });
     commands.spawn(gen_body_bundle(
         &parent_moon_node,
