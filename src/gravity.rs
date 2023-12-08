@@ -13,7 +13,6 @@ pub struct AffectedByGravity {
     pub last_acceleration: Vec2,
 }
 
-#[inline(always)]
 fn gravity_formula(d: f32, m: f32) -> f32 {
     // Real spacetime is very scary, empty, and difficult to navigate.
     // This one is a little bit more intuitive.
@@ -44,11 +43,10 @@ pub fn update(
         let mut acceleration = Vec2::ZERO;
         for &(opos, omass) in attracting_pos_mass.iter() {
             let d = opos - pos.xy();
-            acceleration += d.normalize() * gravity_formula(d.length(), omass);
+            acceleration += d.normalize_or_zero() * gravity_formula(d.length(), omass);
         }
         feedback.last_acceleration = acceleration;
         velocity.linvel += acceleration * time.delta_seconds();
-        debug!("Velocity: {}", velocity.linvel);
     }
 }
 

@@ -117,7 +117,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             linear_damping: 0.0,
             angular_damping: 2.0,
         },
-        Velocity::default(),
+        Velocity::zero(),
         ActiveEvents::COLLISION_EVENTS,
         AffectedByGravity::default(),
         game_layer(),

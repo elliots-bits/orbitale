@@ -221,7 +221,6 @@ pub fn update_orientation_controllers_targets(
                     match ai.state {
                         super::AiState::Aggro => {
                             let local_forward = t.up().xy();
-                            debug!("p: {}", player_t.translation);
                             let d = (player_t.translation - t.translation).xy();
                             controller.target(d.y.atan2(d.x));
                             let current_orientation = local_forward.y.atan2(local_forward.x);

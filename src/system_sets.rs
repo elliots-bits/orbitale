@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy_rapier2d::plugin::PhysicsSet;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SystemSet)]
 pub enum AppStage {
@@ -19,9 +18,9 @@ pub fn setup(app: &mut App) {
             AppStage::AI,
             AppStage::Control,
             AppStage::Simulation,
-            PhysicsSet::SyncBackend,
-            PhysicsSet::StepSimulation,
-            PhysicsSet::Writeback,
+            // PhysicsSet::SyncBackend,
+            // PhysicsSet::StepSimulation,
+            // PhysicsSet::Writeback,
             AppStage::AggregateImpulses,
             AppStage::Draw,
             AppStage::Trajectories,
