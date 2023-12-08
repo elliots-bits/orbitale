@@ -20,10 +20,15 @@ mod thruster;
 mod ui;
 
 use ai::orientation_controller;
-use bevy::{log::LogPlugin, prelude::*};
+use bevy::{
+    a11y::AccessibilityPlugin, audio::AudioPlugin, core_pipeline::CorePipelinePlugin,
+    diagnostic::DiagnosticsPlugin, gizmos::GizmoPlugin, input::InputPlugin, log::LogPlugin,
+    prelude::*, render::RenderPlugin, scene::ScenePlugin, sprite::SpritePlugin, text::TextPlugin,
+    time::TimePlugin, ui::UiPlugin, winit::WinitPlugin,
+};
 use bevy_parallax::ParallaxPlugin;
 use bevy_rapier2d::plugin::{NoUserData, RapierConfiguration, RapierPhysicsPlugin, TimestepMode};
-use bevy_vector_shapes::ShapePlugin;
+use bevy_vector_shapes::Shape2dPlugin;
 use system_sets::AppStage;
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
@@ -38,12 +43,34 @@ fn main() {
     let mut app = App::new();
 
     app.add_state::<AppState>();
-    app.add_plugins((DefaultPlugins.set(LogPlugin {
+    app.add_plugins(LogPlugin {
         filter: "info,wgpu_core=error,wgpu_hal=error,space_chase=debug".into(),
         level: bevy::log::Level::DEBUG,
-    }),));
+    });
+    app.add_plugins(TaskPoolPlugin::default());
+    app.add_plugins(TypeRegistrationPlugin);
+    app.add_plugins(FrameCountPlugin);
+    app.add_plugins(TimePlugin);
+    app.add_plugins(TransformPlugin);
+    app.add_plugins(HierarchyPlugin);
+    app.add_plugins(DiagnosticsPlugin);
+    app.add_plugins(InputPlugin);
+    app.add_plugins(WindowPlugin::default());
+    app.add_plugins(AccessibilityPlugin);
+    app.add_plugins(AssetPlugin::default());
+    app.add_plugins(ScenePlugin);
+    app.add_plugins(WinitPlugin::default());
+    app.add_plugins(RenderPlugin::default());
+    app.add_plugins(ImagePlugin::default());
+    app.add_plugins(CorePipelinePlugin);
+    app.add_plugins(SpritePlugin);
+    app.add_plugins(TextPlugin);
+    app.add_plugins(UiPlugin);
+    app.add_plugins(AudioPlugin::default());
+    app.add_plugins(GilrsPlugin);
+    app.add_plugins(AnimationPlugin);
     app.add_plugins(ParallaxPlugin);
-    app.add_plugins(ShapePlugin::default());
+    app.add_plugins(Shape2dPlugin::default());
     app.add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(1.0));
 
     camera::setup(&mut app);

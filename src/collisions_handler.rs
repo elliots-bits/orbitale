@@ -17,16 +17,15 @@ use crate::{
 };
 
 pub fn update(
-    mut _commands: Commands,
     mut despawn_queue: ResMut<DespawnQueue>,
     mut collisions: EventReader<CollisionEvent>,
     mut player: Query<(Entity, &mut HealthPoints), (With<PlayerMarker>, Without<AlienShipMarker>)>,
     mut alien_ships: Query<&mut HealthPoints, (With<AlienShipMarker>, Without<PlayerMarker>)>,
     lasers: Query<(Entity, &Laser)>,
     celestial_bodies: Query<Entity, With<CelestialBodyMarker>>,
-    mut settings: ResMut<GameSettings>,
     mut impulses: EventWriter<AddExternalImpulse>,
     player_movement_query: Query<(&AffectedByGravity, &Thruster, &Transform)>,
+    settings: Res<GameSettings>,
 ) {
     for event in collisions.read() {
         if let &CollisionEvent::Started(a, b, _) = event {
