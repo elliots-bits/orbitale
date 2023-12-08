@@ -53,8 +53,7 @@ pub fn update(
         if spawn_wave {
             let angle_side = Uniform::new(0.0, PI * 2.0);
             let radius_side = Uniform::new(2000.0, 10000.0);
-            // let n_to_spawn = wave.current_wave * 10;
-            let n_to_spawn = 1;
+            let n_to_spawn = wave.current_wave * 20;
             debug!("Spawning {} alien ships", n_to_spawn);
             // Spawn at random locations around player for now
             for _ in 0..n_to_spawn {
@@ -89,6 +88,11 @@ pub fn update(
                         transform: Transform::from_translation(pos),
                         ..default()
                     },
+                    ActiveEvents::COLLISION_EVENTS,
+                    AffectedByGravity::default(),
+                    game_layer(),
+                ));
+                cmd.insert((
                     Ccd::enabled(),
                     RigidBody::Dynamic,
                     Collider::ball(32.0),
@@ -98,10 +102,7 @@ pub fn update(
                         angular_damping: 0.5,
                     },
                     Velocity::default(),
-                    ActiveEvents::COLLISION_EVENTS,
-                    AffectedByGravity::default(),
                 ));
-                cmd.insert((game_layer(),));
             }
             wave.current_wave += 1;
             wave.started_at = Some(time.elapsed_seconds());

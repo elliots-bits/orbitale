@@ -16,10 +16,11 @@ pub const ALIEN_SHIP_ROTATION_IMPULSE: f32 = 15.0 * ALIEN_SHIP_DRIVE_ENGINE_IMPU
 
 pub const ALIEN_SHIP_LASER_COOLDOWN_S: f32 = 0.25;
 
-const MAX_SHOOT_DISTANCE: f32 = 1000.0;
+const MAX_SHOOT_DISTANCE: f32 = 2000.0;
 const MAX_SHOOT_THETA: f32 = PI / 8.0;
 const MAX_DRIVE_THETA: f32 = PI / 8.0;
-const MIN_ROTATION_THETA: f32 = PI / 32.0; // The aliens are unbeatable if they aim directly at the player
+
+const AGGRO_RANGE: f32 = 2000.0;
 
 /*
 Draft outline of the ships' AI:
@@ -91,18 +92,15 @@ pub fn update(
                 );
                 laser_ability.last_shot = Some(time.elapsed_seconds());
             }
-            if orientation_to_player.abs() < MAX_DRIVE_THETA {
+
+            if orientation_to_player.abs() < MAX_DRIVE_THETA && d.length() > AGGRO_RANGE {
                 thruster.throttle(time.delta_seconds());
             } else {
                 thruster.release(time.delta_seconds());
             }
 
-            if orientation_to_player.abs() > MIN_ROTATION_THETA {
-                debug!("----");
-                angular_impulse +=
-                    orientation_controller.torque_needed(current_orientation, v.angvel);
-                debug!("----");
-            }
+            angular_impulse += orientation_controller.torque_needed(current_orientation, v.angvel);
+
             impulses.send(AddExternalImpulse {
                 entity,
                 impulse: Vec2::ZERO,
