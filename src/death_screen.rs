@@ -66,7 +66,7 @@ fn setup_death_screen(
 
     let game_over_title = commands
         .spawn((TextBundle::from_section(
-            "Game Over !",
+            " Game Over !",
             TextStyle {
                 font_size: 100.0,
                 font: asset_server.load("fusion-pixel-12px-proportional-latin.ttf"),
