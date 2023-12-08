@@ -132,18 +132,27 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ));
     }
 
-    let child_2_moon_node = parent_moon_node.with_child(CircularOrbitDef {
+    let child_binary_center = parent_moon_node.with_child(CircularOrbitDef {
         theta: PI,
         radius: 8.0 * SYSTEM_DISTANCE_SCALE,
         freq: 1.0 / 600.0,
     });
-    commands.spawn(gen_body_bundle(
-        child_2_moon_node,
-        2.0,
-        &texture,
-        sprite_radius,
-        2e7,
-    ));
+    {
+        let binary_a = child_binary_center.with_child(CircularOrbitDef {
+            theta: 0.0,
+            radius: 0.08 * SYSTEM_DISTANCE_SCALE,
+            freq: 1.0,
+        });
+        commands.spawn(gen_body_bundle(binary_a, 0.5, &texture, sprite_radius, 3e6));
+    }
+    {
+        let binary_b = child_binary_center.with_child(CircularOrbitDef {
+            theta: PI,
+            radius: 0.08 * SYSTEM_DISTANCE_SCALE,
+            freq: 1.0,
+        });
+        commands.spawn(gen_body_bundle(binary_b, 0.5, &texture, sprite_radius, 3e6));
+    }
 
     commands.insert_resource(OrbitHierarchy {
         roots: vec![parent_moon_node],

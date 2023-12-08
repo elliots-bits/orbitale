@@ -19,7 +19,7 @@ use crate::{
 use rand::distributions::Uniform;
 
 const ENABLE_ENEMIES: bool = true;
-const WAVE_DURATION_S: f32 = 10.0;
+const WAVE_DURATION_S: f32 = 20.0;
 
 #[derive(Resource)]
 pub struct AlienWave {
@@ -49,7 +49,7 @@ pub fn update(
         if spawn_wave {
             let angle_side = Uniform::new(0.0, PI * 2.0);
             let radius_side = Uniform::new(2000.0, 10000.0);
-            let n_to_spawn = wave.current_wave * 20;
+            let n_to_spawn = wave.current_wave * 10;
             debug!("Spawning {} alien ships", n_to_spawn);
             // Spawn at random locations around player for now
             for _ in 0..n_to_spawn {
