@@ -7,7 +7,7 @@ use crate::AppState;
 #[derive(Component)]
 struct Menu;
 
-#[derive(Resource, Default)]
+#[derive(Resource, Default, Clone, Copy)]
 pub struct GameSettings {
     pub difficulty: Difficulty,
     pub entities_quantity: EntitiesQuantity,
@@ -61,7 +61,6 @@ pub struct PlayButton;
 
 pub fn setup(app: &mut App) {
     app.insert_resource(GameSettings::default());
-    app.add_systems(OnEnter(AppState::DeathScreen), on_death);
 
     app.add_systems(OnEnter(AppState::Menu), setup_menu);
     app.add_systems(OnExit(AppState::Menu), cleanup_menu);
@@ -69,11 +68,6 @@ pub fn setup(app: &mut App) {
         Update,
         (update_menu, play_on_press_space).run_if(in_state(AppState::Menu)),
     );
-}
-
-fn on_death(mut next_state: ResMut<NextState<AppState>>) {
-    debug!("Death menu");
-    next_state.set(AppState::Menu);
 }
 
 #[derive(Component)]
@@ -103,6 +97,27 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
             Menu {},
         ))
         .id();
+
+    let new_game_title = commands
+        .spawn((TextBundle::from_section(
+            "New Game",
+            TextStyle {
+                font_size: 80.0,
+                font: asset_server.load("fusion-pixel-12px-proportional-latin.ttf"),
+                color: PRIMARY_COLOR,
+                ..default()
+            },
+        )
+        .with_style(Style {
+            margin: UiRect {
+                bottom: Val::Px(20.),
+                ..Default::default()
+            },
+            ..Default::default()
+        }),))
+        .id();
+
+    commands.entity(menu).add_child(new_game_title);
 
     let difficulty_title = commands
         .spawn(TextBundle::from_section(

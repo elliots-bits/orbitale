@@ -2,7 +2,10 @@ use std::time::Duration;
 
 use bevy::{prelude::*, transform::commands, utils::Instant};
 
-use crate::AppState;
+use crate::{
+    menu::{Difficulty, GameSettings},
+    AppState,
+};
 
 #[derive(Resource)]
 pub struct Score {
@@ -62,13 +65,30 @@ fn cleanup_score_hud(mut commands: Commands, text_query: Query<Entity, With<Scor
     }
 }
 
-fn update_score_hud(mut text_query: Query<&mut Text, With<ScoreHudText>>, score: Res<Score>) {
-    let score_value = (score.enemies_killed * 10) as i32
-        - Instant::now()
-            .duration_since(score.time_game_start)
-            .as_secs() as i32;
+pub fn score_multiplier(settings: &Res<GameSettings>) -> i32 {
+    match settings.difficulty {
+        Difficulty::Hard => 2,
+        Difficulty::Impossible => 5,
+        _ => 1,
+    }
+}
 
+pub fn compute_score(score: &Res<Score>, settings: &Res<GameSettings>) -> i32 {
+    let score_multiplier = score_multiplier(settings);
+    let enemies_killed = (score.enemies_killed * 10) as i32;
+    let game_duration = Instant::now()
+        .duration_since(score.time_game_start)
+        .as_secs() as i32;
+
+    (enemies_killed - game_duration) * score_multiplier
+}
+
+fn update_score_hud(
+    mut text_query: Query<&mut Text, With<ScoreHudText>>,
+    score: Res<Score>,
+    settings: Res<GameSettings>,
+) {
     if let Ok(mut text) = text_query.get_single_mut() {
-        text.sections[0].value = format!("Score: {}", score_value);
+        text.sections[0].value = format!("Score: {}", compute_score(&score, &settings));
     }
 }
