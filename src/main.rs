@@ -6,6 +6,7 @@ mod celestial_body;
 mod collisions_handler;
 mod course_planner;
 mod death;
+mod death_screen;
 mod despawn_queue;
 mod gravity;
 mod healthpoints;
@@ -79,6 +80,7 @@ fn main() {
     system_sets::setup(&mut app);
     menu::setup(&mut app);
     score::setup(&mut app);
+    death_screen::setup(&mut app);
 
     app.insert_resource(RapierConfiguration {
         gravity: Vec2::ZERO,
