@@ -1,3 +1,4 @@
+mod ai;
 mod alien_ship;
 mod alien_waves;
 mod camera;

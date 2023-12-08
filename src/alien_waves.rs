@@ -7,7 +7,11 @@ use rand::prelude::*;
 use std::f32::consts::PI;
 
 use crate::{
-    alien_ship::{AlienShipMarker, ALIEN_SHIP_LASER_COOLDOWN_S},
+    ai::orientation_controller::OrientationController,
+    alien_ship::{
+        AlienShipMarker, ALIEN_SHIP_DRIVE_ENGINE_IMPULSE, ALIEN_SHIP_LASER_COOLDOWN_S,
+        ALIEN_SHIP_ROTATION_IMPULSE,
+    },
     camera::game_layer,
     course_planner::ComputedTrajectory,
     gravity::AffectedByGravity,
@@ -19,7 +23,7 @@ use crate::{
 use rand::distributions::Uniform;
 
 const ENABLE_ENEMIES: bool = true;
-const WAVE_DURATION_S: f32 = 20.0;
+const WAVE_DURATION_S: f32 = 10.0;
 
 #[derive(Resource)]
 pub struct AlienWave {
@@ -49,7 +53,8 @@ pub fn update(
         if spawn_wave {
             let angle_side = Uniform::new(0.0, PI * 2.0);
             let radius_side = Uniform::new(2000.0, 10000.0);
-            let n_to_spawn = wave.current_wave * 10;
+            // let n_to_spawn = wave.current_wave * 10;
+            let n_to_spawn = 1;
             debug!("Spawning {} alien ships", n_to_spawn);
             // Spawn at random locations around player for now
             for _ in 0..n_to_spawn {
@@ -60,19 +65,20 @@ pub fn update(
                     player_t.translation.y + theta.sin() * r,
                     0.0,
                 );
-                commands.spawn((
+                let mut cmd = commands.spawn((
                     AlienShipMarker,
                     HealthPoints {
                         max: 10.0,
                         current: 10.0,
                     },
                     Thruster {
-                        max_thrust: 4.0,
+                        max_thrust: ALIEN_SHIP_DRIVE_ENGINE_IMPULSE,
                         current_thrust: 0.0,
                         rampup_rate: 2.0,
                         shutoff_rate: 7.0,
                         ignition_thrust: 2.0,
                     },
+                    OrientationController::new(ALIEN_SHIP_ROTATION_IMPULSE),
                     LaserAbility {
                         last_shot: None,
                         cooldown: ALIEN_SHIP_LASER_COOLDOWN_S,
@@ -94,8 +100,8 @@ pub fn update(
                     Velocity::default(),
                     ActiveEvents::COLLISION_EVENTS,
                     AffectedByGravity::default(),
-                    game_layer(),
                 ));
+                cmd.insert((game_layer(),));
             }
             wave.current_wave += 1;
             wave.started_at = Some(time.elapsed_seconds());
