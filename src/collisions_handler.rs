@@ -7,7 +7,7 @@ use crate::{
     despawn_queue::DespawnQueue,
     healthpoints::HealthPoints,
     lasers::{Laser, LaserOrigin},
-    menu::GameSettings,
+    menu::{Difficulty, GameSettings},
     player::PlayerMarker,
 };
 
@@ -54,7 +54,7 @@ pub fn update(
             {
                 // debug!("An alien ship has been hit");
                 despawn_queue.1.insert(laser_entity);
-                alien_ship.decrease(laser.damage, settings.difficulty);
+                alien_ship.decrease(laser.damage, Difficulty::Normal);
             }
 
             // Check for player ship hitting alien ship
@@ -68,7 +68,7 @@ pub fn update(
                 }
             {
                 // debug!("The player has crashed into an alien ship");
-                alien_ship.decrease(25.0, settings.difficulty);
+                alien_ship.decrease(25.0, Difficulty::Normal);
             }
 
             // Check for player ship hitting celestial body
@@ -98,7 +98,7 @@ pub fn update(
             {
                 // debug!("The player has crashed into an alien ship");
                 let hp = alien_hp.max;
-                alien_hp.decrease(hp, settings.difficulty);
+                alien_hp.decrease(hp, Difficulty::Normal);
             }
 
             // Check for laser hitting celestial body
