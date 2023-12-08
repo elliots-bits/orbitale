@@ -21,7 +21,6 @@ fn gravity_formula(d: f32, m: f32) -> f32 {
 }
 
 pub fn update(
-    mut _impulses: EventWriter<AddExternalImpulse>,
     time: Res<Time>,
     attracting_bodies: Query<(Entity, &ColliderMassProperties, &Transform), With<AttractingBody>>,
     mut affected_bodies: Query<(&mut Velocity, &Transform, &mut AffectedByGravity)>,
@@ -49,6 +48,7 @@ pub fn update(
         }
         feedback.last_acceleration = acceleration;
         velocity.linvel += acceleration * time.delta_seconds();
+        debug!("Velocity: {}", velocity.linvel);
     }
 }
 

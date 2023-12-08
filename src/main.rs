@@ -140,7 +140,7 @@ fn main() {
             thruster::update,
             lasers::update,
             collisions_handler::update,
-            // gravity::update,
+            gravity::update,
             celestial_body::update,
             death::update,
             particles::update,
