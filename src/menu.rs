@@ -14,9 +14,9 @@ use crate::AppState;
 struct Menu;
 
 #[derive(Resource, Default)]
-struct GameSettings {
-    difficulty: Difficulty,
-    entities_quantity: EntitiesQuantity,
+pub struct GameSettings {
+    pub difficulty: Difficulty,
+    pub entities_quantity: EntitiesQuantity,
 }
 
 #[derive(Component, Default, EnumIter, Clone, Copy, PartialEq)]

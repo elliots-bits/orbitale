@@ -7,6 +7,7 @@ use crate::{
     despawn_queue::DespawnQueue,
     healthpoints::HealthPoints,
     lasers::{Laser, LaserOrigin},
+    menu::GameSettings,
     player::PlayerMarker,
 };
 
@@ -18,6 +19,7 @@ pub fn update(
     mut alien_ships: Query<&mut HealthPoints, (With<AlienShipMarker>, Without<PlayerMarker>)>,
     lasers: Query<(Entity, &Laser)>,
     celestial_bodies: Query<Entity, With<CelestialBodyMarker>>,
+    mut settings: ResMut<GameSettings>,
 ) {
     for event in collisions.read() {
         if let &CollisionEvent::Started(a, b, _) = event {
@@ -36,7 +38,7 @@ pub fn update(
                 if laser.origin == LaserOrigin::Enemy {
                     // debug!("Player's been hit by enemy");
                     despawn_queue.1.insert(laser_entity);
-                    player_hp.decrease(laser.damage);
+                    player_hp.decrease(laser.damage, settings.difficulty);
                 }
             }
 
@@ -52,7 +54,7 @@ pub fn update(
             {
                 // debug!("An alien ship has been hit");
                 despawn_queue.1.insert(laser_entity);
-                alien_ship.decrease(laser.damage);
+                alien_ship.decrease(laser.damage, settings.difficulty);
             }
 
             // Check for player ship hitting alien ship
@@ -66,7 +68,7 @@ pub fn update(
                 }
             {
                 // debug!("The player has crashed into an alien ship");
-                alien_ship.decrease(25.0);
+                alien_ship.decrease(25.0, settings.difficulty);
             }
 
             // Check for player ship hitting celestial body
@@ -80,8 +82,8 @@ pub fn update(
                 }
             {
                 // debug!("The player has crashed into an alien ship");
-                let hp = player_hp.current;
-                player_hp.decrease(hp);
+                let hp = player_hp.max;
+                player_hp.decrease(hp, settings.difficulty);
             }
 
             // Check for alien ship hitting celestial body
@@ -95,8 +97,8 @@ pub fn update(
                 }
             {
                 // debug!("The player has crashed into an alien ship");
-                let hp = alien_hp.current;
-                alien_hp.decrease(hp);
+                let hp = alien_hp.max;
+                alien_hp.decrease(hp, settings.difficulty);
             }
 
             // Check for laser hitting celestial body

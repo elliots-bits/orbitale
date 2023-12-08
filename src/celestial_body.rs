@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 use bevy_rapier2d::{
     dynamics::{Ccd, RigidBody},
-    geometry::{ActiveEvents, Collider, ColliderMassProperties},
+    geometry::{ActiveEvents, Collider, ColliderMassProperties, Restitution},
 };
 
 use crate::{camera::game_layer, gravity::AttractingBody};
@@ -180,6 +180,7 @@ fn gen_body_bundle(
         Collider::ball(sprite_radius),
         ColliderMassProperties::Mass(mass),
         ActiveEvents::COLLISION_EVENTS,
+        Restitution::coefficient(1.0),
         game_layer(),
     )
 }
