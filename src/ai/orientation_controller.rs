@@ -47,6 +47,19 @@ impl OrientationController {
         }
     }
 
+    fn shortest_arc(&self, a: f32, b: f32) -> f32 {
+        let a = OrientationController::to_bounded_positive_angle(a);
+        let b = OrientationController::to_bounded_positive_angle(b);
+        let arc = -(a - b);
+        if arc < -PI {
+            arc + 2.0 * PI
+        } else if arc > PI {
+            arc - 2.0 * PI
+        } else {
+            arc
+        }
+    }
+
     pub fn target(&mut self, target: f32) {
         self.rotation_target = Some(OrientationController::to_bounded_positive_angle(target));
     }
@@ -138,14 +151,16 @@ impl OrientationController {
         // debug!("theta={}, v={}", current_orientation, angular_velocity);
         // debug!("target={}", self.rotation_target.unwrap());
 
+        let shortest_arc = self
+            .shortest_arc(current_orientation, self.rotation_target.unwrap())
+            .abs();
         if self.should_stabilize(angular_velocity) {
             // debug!("stabilizing");
-            let t = -angular_velocity.signum() * self.torque_available;
-            let d = angular_velocity.abs() / (t / SHIP_ANGULAR_INERTIA);
-            (t, d)
-        } else if (current_orientation - self.rotation_target.unwrap()).abs() < MIN_ROTATION_THETA {
+            let torque = -angular_velocity.signum() * self.torque_available;
+            (torque, 0.25)
+        } else if shortest_arc < MIN_ROTATION_THETA {
             // debug!("target reached");
-            (0.0, 0.0)
+            (0.0, 0.5 * shortest_arc / angular_velocity.abs())
         } else {
             let ttt_at_current_speed = self
                 .time_to_target(current_orientation, angular_velocity, 0.0)
@@ -170,10 +185,10 @@ impl OrientationController {
                 // debug!("Counterclockwise: {}", positive_ttt);
                 if positive_ttt < negative_ttt {
                     // debug!("Applying torque {}", self.torque_available);
-                    (self.torque_available, positive_ttt / 3.0)
+                    (self.torque_available, (positive_ttt / 5.0).min(0.5))
                 } else {
                     // debug!("Applying torque: {}", -self.torque_available);
-                    (-self.torque_available, negative_ttt / 3.0)
+                    (-self.torque_available, (negative_ttt / 5.0).min(0.5))
                 }
             } else {
                 // debug!("Executing maneuver");
@@ -185,19 +200,16 @@ impl OrientationController {
                     //     "braking, torque: {}",
                     //     self.torque_available * -angular_velocity.signum()
                     // );
-                    (
-                        self.torque_available * -angular_velocity.signum(),
-                        angular_velocity.abs() / (self.torque_available / SHIP_ANGULAR_INERTIA),
-                    )
-                } else if ttt_at_current_speed > 0.2 {
+                    (self.torque_available * -angular_velocity.signum(), 0.1)
+                } else if ttt_at_current_speed > 0.5 {
                     // debug!(
                     //     "accelerating, torque: {}",
                     //     self.torque_available * angular_velocity.signum()
                     // );
-                    (self.torque_available * angular_velocity.signum(), 0.2)
+                    (self.torque_available * angular_velocity.signum(), 0.1)
                 } else {
                     // debug!("keep rotating..");
-                    (0.0, 0.0)
+                    (0.0, 0.3)
                 }
             }
         }
@@ -225,11 +237,11 @@ pub fn update_orientation_controllers_targets(
                             controller.target(d.y.atan2(d.x));
                             let current_orientation = local_forward.y.atan2(local_forward.x);
                             controller.update_command(&time, current_orientation, v.angvel);
-                            debug!(
-                                "set cmd: torque={}, duration={}",
-                                controller.current_command.0,
-                                controller.current_command.1 - time.elapsed_seconds()
-                            );
+                            // debug!(
+                            //     "set cmd: torque={}, duration={}",
+                            //     controller.current_command.0,
+                            //     controller.current_command.1 - time.elapsed_seconds()
+                            // );
                         }
                     };
                     updated_controllers += 1;

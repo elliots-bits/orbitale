@@ -1,11 +1,12 @@
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
+use bevy_rapier2d::dynamics::Velocity;
 
 use crate::{
     ai::orientation_controller::{OrientationController, OrientationControllerQueue},
     impulses_aggregator::AddExternalImpulse,
-    lasers::{Laser, LaserAbility, LaserOrigin},
+    lasers::{self, Laser, LaserAbility, LaserOrigin},
     player::PlayerMarker,
     thruster::Thruster,
 };
@@ -39,6 +40,7 @@ This allows the player to trick the enemy into crashing or being slingshot while
 pub struct AlienShipMarker;
 
 pub fn update(
+    mut commands: Commands,
     mut orientation_controller_queue: ResMut<OrientationControllerQueue>,
     time: Res<Time>,
     mut impulses: EventWriter<AddExternalImpulse>,
@@ -47,6 +49,7 @@ pub fn update(
         (
             Entity,
             &Transform,
+            &Velocity,
             &OrientationController,
             &mut LaserAbility,
             &mut Thruster,
@@ -59,7 +62,8 @@ pub fn update(
 
     // For now, it is very dumb. It aims at the player and accelerates if it points in kinda in the player direction.
     if let Ok(player_t) = player.get_single() {
-        for (entity, t, orientation_controller, mut laser_ability, mut thruster) in query.iter_mut()
+        for (entity, t, v, orientation_controller, mut laser_ability, mut thruster) in
+            query.iter_mut()
         {
             let mut angular_impulse = 0.0;
 
@@ -71,19 +75,19 @@ pub fn update(
                 && laser_ability.ready(&time)
             {
                 let laser_angle = local_forward.y.atan2(local_forward.x);
-                // lasers::spawn(
-                //     &mut commands,
-                //     t.translation.xy()
-                //         + v.linvel * time.delta_seconds()
-                //         + t.up().xy().normalize() * 40.0,
-                //     local_forward.rotate(Vec2 { x: 1500.0, y: 0.0 }) + v.linvel,
-                //     laser_angle,
-                //     Laser {
-                //         origin: LaserOrigin::Enemy,
-                //         damage: 10.0,
-                //         shot_at: time.elapsed_seconds(),
-                //     },
-                // );
+                lasers::spawn(
+                    &mut commands,
+                    t.translation.xy()
+                        + v.linvel * time.delta_seconds()
+                        + t.up().xy().normalize() * 40.0,
+                    local_forward.rotate(Vec2 { x: 1500.0, y: 0.0 }) + v.linvel,
+                    laser_angle,
+                    Laser {
+                        origin: LaserOrigin::Enemy,
+                        damage: 10.0,
+                        shot_at: time.elapsed_seconds(),
+                    },
+                );
                 laser_ability.last_shot = Some(time.elapsed_seconds());
             }
 
