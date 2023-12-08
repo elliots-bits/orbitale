@@ -14,6 +14,7 @@ mod lasers;
 mod menu;
 mod particles;
 mod player;
+mod score;
 mod system_sets;
 mod thruster;
 mod ui;
@@ -118,5 +119,6 @@ fn main() {
     system_sets::setup(&mut app);
     camera::setup(&mut app);
     menu::setup(&mut app);
+    score::setup(&mut app);
     app.run();
 }
