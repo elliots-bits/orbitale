@@ -221,15 +221,16 @@ pub fn update_orientation_controllers_targets(
                     match ai.state {
                         super::AiState::Aggro => {
                             let local_forward = t.up().xy();
+                            debug!("p: {}", player_t.translation);
                             let d = (player_t.translation - t.translation).xy();
                             controller.target(d.y.atan2(d.x));
                             let current_orientation = local_forward.y.atan2(local_forward.x);
                             controller.update_command(&time, current_orientation, v.angvel);
-                            // debug!(
-                            //     "set cmd: torque={}, duration={}",
-                            //     controller.current_command.0,
-                            //     controller.current_command.1 - time.elapsed_seconds()
-                            // );
+                            debug!(
+                                "set cmd: torque={}, duration={}",
+                                controller.current_command.0,
+                                controller.current_command.1 - time.elapsed_seconds()
+                            );
                         }
                     };
                     updated_controllers += 1;

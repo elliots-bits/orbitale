@@ -22,8 +22,8 @@ mod ui;
 use ai::orientation_controller;
 use bevy::{
     a11y::AccessibilityPlugin, audio::AudioPlugin, core_pipeline::CorePipelinePlugin,
-    diagnostic::DiagnosticsPlugin, gizmos::GizmoPlugin, input::InputPlugin, log::LogPlugin,
-    prelude::*, render::RenderPlugin, scene::ScenePlugin, sprite::SpritePlugin, text::TextPlugin,
+    diagnostic::DiagnosticsPlugin, input::InputPlugin, log::LogPlugin, prelude::*,
+    render::RenderPlugin, scene::ScenePlugin, sprite::SpritePlugin, text::TextPlugin,
     time::TimePlugin, ui::UiPlugin, winit::WinitPlugin,
 };
 use bevy_parallax::ParallaxPlugin;
@@ -140,7 +140,7 @@ fn main() {
             thruster::update,
             lasers::update,
             collisions_handler::update,
-            gravity::update,
+            // gravity::update,
             celestial_body::update,
             death::update,
             particles::update,

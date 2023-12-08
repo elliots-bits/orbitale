@@ -106,6 +106,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ComputedTrajectory::default(),
         SpriteBundle {
             texture: asset_server.load("spaceship_dev1.png"),
+            transform: Transform::from_translation(Vec3::ZERO),
             ..default()
         },
         Ccd::enabled(),

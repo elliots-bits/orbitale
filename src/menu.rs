@@ -1,10 +1,4 @@
-use std::default;
-
-use bevy::{
-    asset::meta::Settings,
-    core_pipeline::{bloom::BloomSettings, tonemapping::Tonemapping},
-    prelude::*,
-};
+use bevy::prelude::*;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 

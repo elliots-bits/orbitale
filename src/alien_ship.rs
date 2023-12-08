@@ -1,12 +1,11 @@
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
-use bevy_rapier2d::dynamics::Velocity;
 
 use crate::{
     ai::orientation_controller::{OrientationController, OrientationControllerQueue},
     impulses_aggregator::AddExternalImpulse,
-    lasers::{self, Laser, LaserAbility, LaserOrigin},
+    lasers::{Laser, LaserAbility, LaserOrigin},
     player::PlayerMarker,
     thruster::Thruster,
 };
