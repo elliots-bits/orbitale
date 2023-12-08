@@ -7,9 +7,9 @@ use crate::{alien_ship::AlienShipMarker, player::PlayerMarker};
 
 use super::ShipAi;
 
-const SHIP_ANGULAR_INERTIA: f32 = 0.5 * 1.0 * 32.0; // 0.5 * mass * radius
+const SHIP_ANGULAR_INERTIA: f32 = 8.0;
 const STABILIZE_ANGULAR_VELOCITY_THRESHOLD: f32 = 2.0 * 2.0 * PI;
-const MIN_ROTATION_THETA: f32 = PI / 12.0; // We're close enough.
+const MIN_ROTATION_THETA: f32 = PI / 24.0; // We're close enough.
 const MAX_CONTROLLER_UPDATES_PER_FRAME: u32 = 50;
 
 #[derive(Resource, Default)]
@@ -185,10 +185,10 @@ impl OrientationController {
                 // debug!("Counterclockwise: {}", positive_ttt);
                 if positive_ttt < negative_ttt {
                     // debug!("Applying torque {}", self.torque_available);
-                    (self.torque_available, (positive_ttt / 5.0).min(0.5))
+                    (self.torque_available, (positive_ttt / 2.0).min(0.25))
                 } else {
                     // debug!("Applying torque: {}", -self.torque_available);
-                    (-self.torque_available, (negative_ttt / 5.0).min(0.5))
+                    (-self.torque_available, (negative_ttt / 2.0).min(0.25))
                 }
             } else {
                 // debug!("Executing maneuver");
@@ -209,7 +209,7 @@ impl OrientationController {
                     (self.torque_available * angular_velocity.signum(), 0.1)
                 } else {
                     // debug!("keep rotating..");
-                    (0.0, 0.3)
+                    (0.0, 0.1)
                 }
             }
         }
