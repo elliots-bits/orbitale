@@ -3,6 +3,7 @@ use bevy_rapier2d::plugin::PhysicsSet;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SystemSet)]
 pub enum AppStage {
+    AI,
     Control,
     Trajectories,
     Simulation,
@@ -15,6 +16,7 @@ pub fn setup(app: &mut App) {
     app.configure_sets(
         Update,
         (
+            AppStage::AI,
             AppStage::Control,
             AppStage::Simulation,
             PhysicsSet::SyncBackend,

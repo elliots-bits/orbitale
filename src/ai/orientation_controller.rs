@@ -1,19 +1,25 @@
-use std::f32::consts::PI;
+use std::{collections::VecDeque, f32::consts::PI};
 
 use bevy::prelude::*;
+use bevy_rapier2d::dynamics::Velocity;
+
+use crate::{alien_ship::AlienShipMarker, player::PlayerMarker};
+
+use super::ShipAi;
 
 const SHIP_ANGULAR_INERTIA: f32 = 0.5 * 1.0 * 32.0; // 0.5 * mass * radius
 const STABILIZE_ANGULAR_VELOCITY_THRESHOLD: f32 = 2.0 * 2.0 * PI;
 const MIN_ROTATION_THETA: f32 = PI / 32.0; // We're close enough.
-const MAX_CONTROLLER_UPDATES_PER_FRAME: u32 = 5;
-const STALE_CONTROLLER_COMMAND_AGE: f32 = 0.1;
+const MAX_CONTROLLER_UPDATES_PER_FRAME: u32 = 50;
+
+#[derive(Resource, Default)]
+pub struct OrientationControllerQueue(pub VecDeque<Entity>);
 
 #[derive(Component)]
 pub struct OrientationController {
     pub rotation_target: Option<f32>,
     pub torque_available: f32,
     pub current_requested_torque: f32,
-    pub updated_at: f32,
 }
 
 impl OrientationController {
@@ -22,7 +28,12 @@ impl OrientationController {
             rotation_target: None,
             current_requested_torque: 0.0,
             torque_available,
-            updated_at: 0.0,
+        }
+    }
+
+    pub fn update_command(&mut self, p0: f32, v0: f32) {
+        if self.rotation_target.is_some() {
+            self.current_requested_torque = self.torque_needed(p0, v0);
         }
     }
 
@@ -37,10 +48,6 @@ impl OrientationController {
 
     pub fn target(&mut self, target: f32) {
         self.rotation_target = Some(OrientationController::to_bounded_positive_angle(target));
-    }
-
-    pub fn unset(&mut self) {
-        self.rotation_target = None;
     }
 
     pub fn time_to_target(&self, p0: f32, v0: f32, a: f32) -> Option<f32> {
@@ -74,22 +81,20 @@ impl OrientationController {
             } else {
                 let det = v0.powf(2.0) - 4.0 * a * arc;
                 if det < 0.0 {
-                    debug!("Would rotate in wrong direction");
+                    // debug!("Would rotate in wrong direction");
                     let arc = if arc < 0.0 {
                         arc + PI * 2.0
                     } else {
                         arc - PI * 2.0
                     };
-                    let x1 = (-v0 - (v0.powf(2.0) - 2.0 * a * arc).sqrt()) / (2.0 * a);
                     let x2 = (-v0 + (v0.powf(2.0) - 2.0 * a * arc).sqrt()) / (2.0 * a);
-                    debug!("x1={}, x2={}", x1, x2);
+                    // debug!("x1={}, x2={}", x1, x2);
                     x2.abs()
                 } else if det == 0.0 {
                     -v0 / (2.0 * a)
                 } else {
-                    let x1 = (-v0 - (v0.powf(2.0) - 2.0 * a * arc).sqrt()) / (2.0 * a);
                     let x2 = (-v0 + (v0.powf(2.0) - 2.0 * a * arc).sqrt()) / (2.0 * a);
-                    debug!("x1={}, x2={}", x1, x2);
+                    // debug!("x1={}, x2={}", x1, x2);
                     x2.abs()
                 }
             }
@@ -178,7 +183,7 @@ impl OrientationController {
                     //     self.torque_available * -angular_velocity.signum()
                     // );
                     self.torque_available * -angular_velocity.signum()
-                } else if ttt_at_current_speed > 0.1 {
+                } else if ttt_at_current_speed > 0.2 {
                     // debug!(
                     //     "accelerating, torque: {}",
                     //     self.torque_available * angular_velocity.signum()
@@ -193,6 +198,43 @@ impl OrientationController {
     }
 }
 
+pub fn update_orientation_controllers_targets(
+    player: Query<&Transform, With<PlayerMarker>>,
+    mut queue: ResMut<OrientationControllerQueue>,
+    mut ships: Query<
+        (&Transform, &Velocity, &ShipAi, &mut OrientationController),
+        With<AlienShipMarker>,
+    >,
+) {
+    let mut to_push_back = Vec::<Entity>::new();
+    if let Ok(player_t) = player.get_single() {
+        let mut updated_controllers = 0;
+        while let Some(e) = queue.0.pop_front() {
+            if updated_controllers < MAX_CONTROLLER_UPDATES_PER_FRAME {
+                if let Ok((t, v, ai, mut controller)) = ships.get_mut(e) {
+                    match ai.state {
+                        super::AiState::Aggro => {
+                            let local_forward = t.up().xy();
+                            let d = (player_t.translation - t.translation).xy();
+                            controller.target(d.y.atan2(d.x));
+                            let current_orientation = local_forward.y.atan2(local_forward.x);
+                            controller.update_command(current_orientation, v.angvel);
+                        }
+                    };
+                    to_push_back.push(e);
+                    updated_controllers += 1;
+                }
+            } else {
+                break;
+            }
+        }
+    }
+
+    for e in to_push_back.iter() {
+        queue.0.push_back(*e);
+    }
+}
+
 #[test]
 pub fn test_time_to_target() {
     let epsilon = 0.00001;
@@ -200,7 +242,6 @@ pub fn test_time_to_target() {
         rotation_target: None,
         torque_available: 0.0,
         current_requested_torque: 0.0,
-        updated_at: 0.0,
     };
 
     controller.target(PI * 17.0);

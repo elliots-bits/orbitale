@@ -7,7 +7,10 @@ use rand::prelude::*;
 use std::f32::consts::PI;
 
 use crate::{
-    ai::orientation_controller::OrientationController,
+    ai::{
+        orientation_controller::{OrientationController, OrientationControllerQueue},
+        ShipAi,
+    },
     alien_ship::{
         AlienShipMarker, ALIEN_SHIP_DRIVE_ENGINE_IMPULSE, ALIEN_SHIP_LASER_COOLDOWN_S,
         ALIEN_SHIP_ROTATION_IMPULSE,
@@ -40,6 +43,7 @@ pub fn setup(mut commands: Commands) {
 
 pub fn update(
     mut commands: Commands,
+    mut controller_queue: ResMut<OrientationControllerQueue>,
     time: Res<Time>,
     asset_server: Res<AssetServer>,
     player: Query<&Transform, With<PlayerMarker>>,
@@ -64,7 +68,7 @@ pub fn update(
                     player_t.translation.y + theta.sin() * r,
                     0.0,
                 );
-                let mut cmd = commands.spawn((
+                let mut cmd: bevy::ecs::system::EntityCommands<'_, '_, '_> = commands.spawn((
                     AlienShipMarker,
                     HealthPoints {
                         max: 10.0,
@@ -77,6 +81,7 @@ pub fn update(
                         shutoff_rate: 7.0,
                         ignition_thrust: 2.0,
                     },
+                    ShipAi::default(),
                     OrientationController::new(ALIEN_SHIP_ROTATION_IMPULSE),
                     LaserAbility {
                         last_shot: None,
@@ -103,6 +108,7 @@ pub fn update(
                     },
                     Velocity::default(),
                 ));
+                controller_queue.0.push_back(cmd.id());
             }
             wave.current_wave += 1;
             wave.started_at = Some(time.elapsed_seconds());

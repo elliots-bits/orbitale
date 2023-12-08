@@ -19,7 +19,9 @@ mod system_sets;
 mod thruster;
 mod ui;
 
+use ai::orientation_controller;
 use bevy::{log::LogPlugin, prelude::*};
+use bevy_parallax::ParallaxPlugin;
 use bevy_rapier2d::plugin::{NoUserData, RapierConfiguration, RapierPhysicsPlugin, TimestepMode};
 use bevy_vector_shapes::ShapePlugin;
 use system_sets::AppStage;
@@ -43,7 +45,15 @@ fn main() {
         }),
         RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(1.0),
         ShapePlugin::default(),
+        ParallaxPlugin,
     ));
+
+    impulses_aggregator::setup(&mut app);
+    despawn_queue::setup(&mut app);
+    system_sets::setup(&mut app);
+    camera::setup(&mut app);
+    menu::setup(&mut app);
+    score::setup(&mut app);
 
     app.insert_resource(RapierConfiguration {
         gravity: Vec2::ZERO,
@@ -54,16 +64,6 @@ fn main() {
         },
         ..default()
     });
-
-    app.add_systems(
-        OnEnter(AppState::Game),
-        (
-            ui::setup,
-            player::setup,
-            alien_waves::setup,
-            celestial_body::setup,
-        ),
-    );
     app.add_systems(
         OnExit(AppState::Game),
         (
@@ -74,11 +74,30 @@ fn main() {
     );
 
     app.add_systems(
+        OnEnter(AppState::Game),
+        (
+            ui::setup,
+            player::setup,
+            alien_waves::setup,
+            celestial_body::setup,
+            ai::setup,
+        ),
+    );
+
+    app.add_systems(
         Update,
         (player::control, alien_waves::update, alien_ship::update)
             .in_set(AppStage::Control)
             .run_if(in_state(AppState::Game)),
     );
+
+    app.add_systems(
+        Update,
+        (orientation_controller::update_orientation_controllers_targets)
+            .in_set(AppStage::AI)
+            .run_if(in_state(AppState::Game)),
+    );
+
     app.add_systems(
         Update,
         (
@@ -114,11 +133,5 @@ fn main() {
             .in_set(AppStage::Draw)
             .run_if(in_state(AppState::Game)),
     );
-    impulses_aggregator::setup(&mut app);
-    despawn_queue::setup(&mut app);
-    system_sets::setup(&mut app);
-    camera::setup(&mut app);
-    menu::setup(&mut app);
-    score::setup(&mut app);
     app.run();
 }

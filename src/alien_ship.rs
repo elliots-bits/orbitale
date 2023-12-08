@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::dynamics::Velocity;
 
 use crate::{
-    ai::orientation_controller::OrientationController,
+    ai::{orientation_controller::OrientationController, ShipAi},
     impulses_aggregator::AddExternalImpulse,
     lasers::{self, Laser, LaserAbility, LaserOrigin},
     player::PlayerMarker,
@@ -49,7 +49,7 @@ pub fn update(
             Entity,
             &Transform,
             &Velocity,
-            &mut OrientationController,
+            &OrientationController,
             &mut LaserAbility,
             &mut Thruster,
         ),
@@ -60,17 +60,14 @@ pub fn update(
     // We'll at least have to implement a basic PID control loop.
 
     // For now, it is very dumb. It aims at the player and accelerates if it points in kinda in the player direction.
-
     if let Ok(player_t) = player.get_single() {
-        for (entity, t, v, mut orientation_controller, mut laser_ability, mut thruster) in
+        for (entity, t, v, orientation_controller, mut laser_ability, mut thruster) in
             query.iter_mut()
         {
             let mut angular_impulse = 0.0;
 
             let local_forward = t.up().xy();
             let d = (player_t.translation - t.translation).xy();
-            orientation_controller.target(d.y.atan2(d.x));
-            let current_orientation = local_forward.y.atan2(local_forward.x);
             let orientation_to_player = local_forward.angle_between(d);
             if d.length() < MAX_SHOOT_DISTANCE
                 && orientation_to_player.abs() < MAX_SHOOT_THETA
@@ -99,8 +96,7 @@ pub fn update(
                 thruster.release(time.delta_seconds());
             }
 
-            angular_impulse += orientation_controller.torque_needed(current_orientation, v.angvel);
-
+            angular_impulse += orientation_controller.current_requested_torque;
             impulses.send(AddExternalImpulse {
                 entity,
                 impulse: Vec2::ZERO,

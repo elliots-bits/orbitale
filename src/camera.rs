@@ -9,7 +9,7 @@ use bevy::{
 };
 use bevy_parallax::{
     CreateParallaxEvent, LayerData, LayerRepeat, LayerSpeed, ParallaxCameraComponent,
-    ParallaxMoveEvent, ParallaxPlugin, ParallaxSystems, RepeatStrategy,
+    ParallaxMoveEvent, ParallaxSystems, RepeatStrategy,
 };
 use bevy_rapier2d::dynamics::Velocity;
 
@@ -25,7 +25,6 @@ pub struct GameCameraMarker;
 pub struct UICameraMarker;
 
 pub fn setup(app: &mut App) {
-    app.add_plugins(ParallaxPlugin);
     app.add_systems(
         OnEnter(AppState::Game),
         (initialize_game_camera, initialize_ui_camera),
