@@ -40,7 +40,6 @@ This allows the player to trick the enemy into crashing or being slingshot while
 pub struct AlienShipMarker;
 
 pub fn update(
-    mut commands: Commands,
     mut orientation_controller_queue: ResMut<OrientationControllerQueue>,
     time: Res<Time>,
     mut impulses: EventWriter<AddExternalImpulse>,
