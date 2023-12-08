@@ -11,6 +11,7 @@ use crate::{
     healthpoints::HealthPoints,
     impulses_aggregator::AddExternalImpulse,
     lasers::{self, Laser, LaserAbility, LaserOrigin},
+    particles::thrusters::spawn_rotation_thruster_cone,
     thruster::Thruster,
 };
 
@@ -46,27 +47,55 @@ pub fn control(
         player.get_single_mut()
     {
         let mut angular_impulse = 0.0;
+        let xy = transform.translation.xy();
+        let particle_distance = 24.0;
         if keys.pressed(KeyCode::Up) {
             thruster.throttle(time.delta_seconds());
         } else {
             thruster.release(time.delta_seconds());
         }
+
         if keys.pressed(KeyCode::Right) {
             angular_impulse -= ROTATION_IMPULSE;
-        }
-        if keys.pressed(KeyCode::Left) {
+            spawn_rotation_thruster_cone(
+                &mut commands,
+                &time,
+                xy + transform.right().xy().normalize() * particle_distance,
+                velocity.linvel,
+                transform.up().xy().normalize(),
+            );
+            spawn_rotation_thruster_cone(
+                &mut commands,
+                &time,
+                xy + transform.left().xy().normalize() * particle_distance,
+                velocity.linvel,
+                transform.down().xy().normalize(),
+            );
+        } else if keys.pressed(KeyCode::Left) {
             angular_impulse += ROTATION_IMPULSE;
+            spawn_rotation_thruster_cone(
+                &mut commands,
+                &time,
+                xy + transform.right().xy().normalize() * particle_distance,
+                velocity.linvel,
+                transform.down().xy().normalize(),
+            );
+            spawn_rotation_thruster_cone(
+                &mut commands,
+                &time,
+                xy + transform.left().xy().normalize() * particle_distance,
+                velocity.linvel,
+                transform.up().xy().normalize(),
+            );
         }
         let local_forward = transform.up().xy();
         if keys.pressed(KeyCode::Space) && laser_ability.ready(&time) {
-            let laser_angle = local_forward.y.atan2(local_forward.x);
             lasers::spawn(
                 &mut commands,
                 transform.translation.xy()
                     + velocity.linvel * time.delta_seconds()
                     + transform.up().xy().normalize() * 40.0,
-                Vec2 { x: 4000.0, y: 0.0 }.rotate(local_forward) + velocity.linvel,
-                laser_angle,
+                Vec2 { x: 3000.0, y: 0.0 }.rotate(local_forward) + velocity.linvel,
                 Laser {
                     origin: LaserOrigin::Player,
                     damage: 100.0,

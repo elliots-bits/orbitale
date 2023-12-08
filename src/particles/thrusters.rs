@@ -12,7 +12,58 @@ use crate::{
 
 use super::{Particle, ParticleKind};
 
-pub fn spawn_thruster_particles(
+pub fn spawn_rotation_thruster_cone(
+    commands: &mut Commands,
+    time: &Time,
+    origin: Vec2,
+    vel: Vec2,
+    direction: Vec2,
+) {
+    let mut rng = rand::thread_rng();
+    let particle_angle_distribution = Uniform::new(-PI / 16.0, PI / 16.0);
+    let particle_speed_distribution = Uniform::new(100.0, 800.0);
+    let particle_end_radius_distribution = Uniform::new(0.0, 3.0);
+    let n = (rng.gen::<f32>().abs() * 10.0) as u32 + 1;
+    for _ in 0..n {
+        let theta = rng.sample(particle_angle_distribution);
+        let speed = rng.sample(particle_speed_distribution);
+        let radius = rng.sample(particle_end_radius_distribution);
+
+        let particle_vel = Vec2 {
+            x: theta.cos() * speed,
+            y: theta.sin() * speed,
+        };
+        let ship_particle_vel = particle_vel.rotate(direction) + vel;
+        let pos = origin + vel * time.delta_seconds();
+        commands.spawn((
+            TransformBundle::from_transform(Transform::from_translation(pos.extend(-1.0))),
+            Particle {
+                lifetime: rng.gen::<f32>().abs().powf(2.0) * 0.15 + 0.05,
+                spawned_at: time.elapsed_seconds(),
+                kind: ParticleKind::Combustion {
+                    init_radius: 1.0,
+                    end_radius: radius,
+                    color: CustomGradient::new()
+                        .colors(&[
+                            colorgrad::Color::new(1.0, 1.0, 0.5, 1.0),
+                            colorgrad::Color::new(1.0, 1.0, 1.0, 1.0),
+                            colorgrad::Color::new(1.0, 1.0, 1.0, 0.0),
+                        ])
+                        .interpolation(colorgrad::Interpolation::Basis)
+                        .build()
+                        .unwrap(),
+                },
+            },
+            Velocity {
+                linvel: ship_particle_vel,
+                angvel: 0.0,
+            },
+            game_layer(),
+        ));
+    }
+}
+
+pub fn spawn_main_thruster_particles(
     mut commands: Commands,
     time: Res<Time>,
     ships: Query<(&Transform, &Velocity, &Thruster)>,
@@ -51,16 +102,11 @@ pub fn spawn_thruster_particles(
                 for _ in 0..n {
                     let theta = rng.sample(particle_angle_distribution);
                     let speed = rng.sample(particle_speed_distribution);
-                    // debug!("theta, s: {}, {}", theta, speed);
-
                     let particle_vel = Vec2 {
                         x: theta.cos() * speed,
                         y: theta.sin() * speed,
                     };
                     let ship_particle_vel = particle_vel.rotate(transform.down().normalize().xy());
-                    // let ship_particle_vel = particle_vel;
-                    // debug!("Local particle velocity: {}", particle_vel);
-                    // debug!("Ship particle velocity: {}", ship_particle_vel);
                     let pos = transform.translation.xy()
                         + velocity.linvel * time.delta_seconds()
                         + transform.down().xy().normalize() * 16.0;
@@ -79,13 +125,12 @@ pub fn spawn_thruster_particles(
                                 end_radius: radius,
                                 color: CustomGradient::new()
                                     .colors(&[
+                                        colorgrad::Color::new(0.0, 0.7, 1.0, 1.0),
                                         colorgrad::Color::new(0.0, 0.5, 1.0, 1.0),
-                                        colorgrad::Color::new(0.0, 0.5, 1.0, 1.0),
-                                        colorgrad::Color::new(0.0, 0.25, 0.75, 0.75),
-                                        colorgrad::Color::new(0.0, 0.25, 0.75, 0.75),
-                                        colorgrad::Color::new(1.0, 1.0, 0.4, 0.5),
+                                        colorgrad::Color::new(0.0, 0.25, 1.0, 0.75),
+                                        colorgrad::Color::new(0.0, 0.25, 1.0, 0.75),
                                         colorgrad::Color::new(1.0, 0.0, 0.0, 0.5),
-                                        colorgrad::Color::new(1.0, 1.0, 1.0, 0.25),
+                                        colorgrad::Color::new(1.0, 1.0, 0.8, 0.5),
                                         colorgrad::Color::new(1.0, 1.0, 1.0, 0.0),
                                     ])
                                     .interpolation(colorgrad::Interpolation::Basis)

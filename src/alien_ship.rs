@@ -7,6 +7,7 @@ use crate::{
     ai::orientation_controller::{OrientationController, OrientationControllerQueue},
     impulses_aggregator::AddExternalImpulse,
     lasers::{self, Laser, LaserAbility, LaserOrigin},
+    particles::thrusters::spawn_rotation_thruster_cone,
     player::PlayerMarker,
     thruster::Thruster,
 };
@@ -74,14 +75,12 @@ pub fn update(
                 && orientation_to_player.abs() < MAX_SHOOT_THETA
                 && laser_ability.ready(&time)
             {
-                let laser_angle = local_forward.y.atan2(local_forward.x);
                 lasers::spawn(
                     &mut commands,
                     t.translation.xy()
                         + v.linvel * time.delta_seconds()
-                        + t.up().xy().normalize() * 40.0,
+                        + t.up().xy().normalize() * 60.0,
                     local_forward.rotate(Vec2 { x: 1500.0, y: 0.0 }) + v.linvel,
-                    laser_angle,
                     Laser {
                         origin: LaserOrigin::Enemy,
                         damage: 10.0,
@@ -97,8 +96,24 @@ pub fn update(
                 thruster.release(time.delta_seconds());
             }
             let (cmd_torque, cmd_end_time) = orientation_controller.current_command;
-            if time.elapsed_seconds() < cmd_end_time {
+            if time.elapsed_seconds() < cmd_end_time && cmd_torque.abs() > 0.01 {
                 angular_impulse += cmd_torque;
+                let particle_distance = 24.0;
+                let xy = t.translation.xy();
+                spawn_rotation_thruster_cone(
+                    &mut commands,
+                    &time,
+                    xy + t.right().xy().normalize() * particle_distance,
+                    v.linvel,
+                    t.down().xy().normalize() * cmd_torque.signum(),
+                );
+                spawn_rotation_thruster_cone(
+                    &mut commands,
+                    &time,
+                    xy + t.left().xy().normalize() * particle_distance,
+                    v.linvel,
+                    t.up().xy().normalize() * cmd_torque.signum(),
+                );
             } else {
                 orientation_controller_queue.0.push_back(entity);
             }

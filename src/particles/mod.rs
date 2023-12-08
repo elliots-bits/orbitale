@@ -1,4 +1,4 @@
-pub mod spawners;
+pub mod thrusters;
 
 use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::dynamics::Velocity;

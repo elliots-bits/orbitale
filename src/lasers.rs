@@ -5,7 +5,7 @@ use bevy_rapier2d::{
 };
 use bevy_vector_shapes::{painter::ShapePainter, shapes::RectPainter};
 
-use crate::{camera::game_layer, despawn_queue::DespawnQueue};
+use crate::{camera::game_layer, despawn_queue::DespawnQueue, player::PlayerMarker};
 
 pub const LASER_LIFETIME_S: f32 = 2.0;
 
@@ -47,28 +47,34 @@ pub fn update(
     }
 }
 
-pub fn draw(query: Query<(&Transform, &Laser)>, mut painter: ShapePainter) {
-    for (transform, Laser { origin, .. }) in query.iter() {
-        let color = match origin {
-            LaserOrigin::Enemy => Color::hex("FF0000").unwrap(),
-            LaserOrigin::Player => Color::hex("00FF00").unwrap(),
-        };
-        painter.reset();
-        painter.set_2d();
-        painter.set_rotation(transform.rotation);
-        painter.set_translation(transform.translation);
-        painter.color = color;
-        painter.rect(Vec2 { x: 20.0, y: 1.0 });
+pub fn draw(
+    player: Query<&Velocity, With<PlayerMarker>>,
+    query: Query<(&Transform, &Velocity, &Laser)>,
+    mut painter: ShapePainter,
+) {
+    if let Ok(pv) = player.get_single() {
+        for (transform, v, Laser { origin, .. }) in query.iter() {
+            let dv = v.linvel - pv.linvel;
+            let (color, size) = match origin {
+                LaserOrigin::Enemy => (Color::hex("FF0000").unwrap(), Vec2::new(30.0, 2.0)),
+                LaserOrigin::Player => (Color::hex("00FF80").unwrap(), Vec2::new(20.0, 3.0)),
+            };
+            painter.reset();
+            painter.set_2d();
+            painter.set_rotation(Quat::from_axis_angle(Vec3::Z, dv.y.atan2(dv.x)));
+            painter.set_translation(transform.translation);
+            painter.color = color;
+            painter.rect(size);
+        }
     }
 }
 
-pub fn spawn(commands: &mut Commands, position: Vec2, velocity: Vec2, angle: f32, props: Laser) {
+pub fn spawn(commands: &mut Commands, position: Vec2, velocity: Vec2, props: Laser) {
     let mut transform = Transform::from_translation(Vec3 {
         x: position.x,
         y: position.y,
         z: 1.0,
     });
-    transform.rotate_axis(Vec3::Z, angle);
     commands.spawn((
         props,
         TransformBundle::from_transform(transform),

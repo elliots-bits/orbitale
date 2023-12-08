@@ -9,7 +9,7 @@ use super::ShipAi;
 
 const SHIP_ANGULAR_INERTIA: f32 = 0.5 * 1.0 * 32.0; // 0.5 * mass * radius
 const STABILIZE_ANGULAR_VELOCITY_THRESHOLD: f32 = 2.0 * 2.0 * PI;
-const MIN_ROTATION_THETA: f32 = PI / 32.0; // We're close enough.
+const MIN_ROTATION_THETA: f32 = PI / 12.0; // We're close enough.
 const MAX_CONTROLLER_UPDATES_PER_FRAME: u32 = 50;
 
 #[derive(Resource, Default)]
