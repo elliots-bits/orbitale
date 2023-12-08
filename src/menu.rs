@@ -71,7 +71,10 @@ pub fn setup(app: &mut App) {
 
     app.add_systems(OnEnter(AppState::Menu), setup_menu);
     app.add_systems(OnExit(AppState::Menu), cleanup_menu);
-    app.add_systems(Update, update_menu.run_if(in_state(AppState::Menu)));
+    app.add_systems(
+        Update,
+        (update_menu, play_on_press_space).run_if(in_state(AppState::Menu)),
+    );
 }
 
 fn on_death(mut next_state: ResMut<NextState<AppState>>) {
@@ -279,7 +282,7 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
         ))
         .with_children(|parent| {
             parent.spawn(TextBundle::from_section(
-                "Play",
+                "Play [ ]",
                 TextStyle {
                     font_size: 40.0,
                     color: PRIMARY_COLOR,
@@ -366,6 +369,12 @@ fn update_menu(
                 background_color.0 = Color::NONE.into();
             }
         }
+    }
+}
+
+fn play_on_press_space(mut next_state: ResMut<NextState<AppState>>, keys: Res<Input<KeyCode>>) {
+    if keys.pressed(KeyCode::Space) {
+        next_state.set(AppState::Game);
     }
 }
 
