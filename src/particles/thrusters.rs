@@ -20,10 +20,11 @@ pub fn spawn_rotation_thruster_cone(
     direction: Vec2,
 ) {
     let mut rng = rand::thread_rng();
-    let particle_angle_distribution = Uniform::new(-PI / 16.0, PI / 16.0);
-    let particle_speed_distribution = Uniform::new(100.0, 800.0);
-    let particle_end_radius_distribution = Uniform::new(0.0, 3.0);
-    let n = (rng.gen::<f32>().abs() * 10.0) as u32 + 1;
+    let cone_arc = PI / 11.0;
+    let particle_angle_distribution = Uniform::new(-cone_arc / 2.0, cone_arc / 2.0);
+    let particle_speed_distribution = Uniform::new(100.0, 600.0);
+    let particle_end_radius_distribution = Uniform::new::<f32, f32>(1.0, 3.0);
+    let n = (rng.gen::<f32>().abs().min(1.0) * 10.0) as u32 + 1;
     for _ in 0..n {
         let theta = rng.sample(particle_angle_distribution);
         let speed = rng.sample(particle_speed_distribution);
@@ -38,15 +39,15 @@ pub fn spawn_rotation_thruster_cone(
         commands.spawn((
             TransformBundle::from_transform(Transform::from_translation(pos.extend(-1.0))),
             Particle {
-                lifetime: rng.gen::<f32>().abs().powf(2.0) * 0.15 + 0.05,
+                lifetime: rng.gen::<f32>().abs().min(1.0).powf(4.0) * 0.25 + 0.05,
                 spawned_at: time.elapsed_seconds(),
                 kind: ParticleKind::Combustion {
-                    init_radius: 1.0,
-                    end_radius: radius,
+                    init_radius: 0.0,
+                    end_radius: ((radius - 1.0) / 2.0).powf(2.0) * 2.0 + 1.0,
                     color: CustomGradient::new()
                         .colors(&[
-                            colorgrad::Color::new(1.0, 1.0, 0.5, 1.0),
-                            colorgrad::Color::new(1.0, 1.0, 1.0, 1.0),
+                            colorgrad::Color::new(1.0, 1.0, 0.5, 0.7),
+                            colorgrad::Color::new(1.0, 1.0, 1.0, 0.4),
                             colorgrad::Color::new(1.0, 1.0, 1.0, 0.0),
                         ])
                         .interpolation(colorgrad::Interpolation::Basis)
@@ -78,7 +79,7 @@ pub fn spawn_main_thruster_particles(
         };
 
         let mut rng = rand::thread_rng();
-        let max_angle_at_lowest_thrust = PI / 2.0;
+        let max_angle_at_lowest_thrust = PI / 3.0;
         let max_particle_speed = 1000.0;
         for (transform, velocity, thruster) in ships.iter() {
             if abs_cam_area.contains(transform.translation.xy()) {

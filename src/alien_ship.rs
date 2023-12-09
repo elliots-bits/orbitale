@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::dynamics::Velocity;
 
 use crate::{
-    ai::orientation_controller::{OrientationController, OrientationControllerQueue},
+    ai::{orientation_controller::OrientationController, OrientationControllerQueue},
     impulses_aggregator::AddExternalImpulse,
     lasers::{self, Laser, LaserAbility, LaserOrigin},
     particles::thrusters::spawn_rotation_thruster_cone,
@@ -21,6 +21,7 @@ const MAX_SHOOT_DISTANCE: f32 = 2000.0;
 const MAX_SHOOT_THETA: f32 = PI / 8.0;
 const MAX_DRIVE_THETA: f32 = PI / 8.0;
 
+const ENABLE_SHOOTING: bool = false;
 const AGGRO_RANGE: f32 = 2000.0;
 
 /*
@@ -71,7 +72,8 @@ pub fn update(
             let local_forward = t.up().xy();
             let d = (player_t.translation - t.translation).xy();
             let orientation_to_player = local_forward.angle_between(d);
-            if d.length() < MAX_SHOOT_DISTANCE
+            if ENABLE_SHOOTING
+                && d.length() < MAX_SHOOT_DISTANCE
                 && orientation_to_player.abs() < MAX_SHOOT_THETA
                 && laser_ability.ready(&time)
             {
@@ -103,17 +105,17 @@ pub fn update(
                 spawn_rotation_thruster_cone(
                     &mut commands,
                     &time,
-                    xy + t.right().xy().normalize() * particle_distance,
+                    xy + t.right().xy().normalize() * particle_distance * cmd_torque.signum(),
                     v.linvel,
                     t.down().xy().normalize() * cmd_torque.signum(),
                 );
-                spawn_rotation_thruster_cone(
-                    &mut commands,
-                    &time,
-                    xy + t.left().xy().normalize() * particle_distance,
-                    v.linvel,
-                    t.up().xy().normalize() * cmd_torque.signum(),
-                );
+                // spawn_rotation_thruster_cone(
+                //     &mut commands,
+                //     &time,
+                //     xy + t.left().xy().normalize() * particle_distance,
+                //     v.linvel,
+                //     t.up().xy().normalize() * cmd_torque.signum(),
+                // );
             } else {
                 orientation_controller_queue.0.push_back(entity);
             }

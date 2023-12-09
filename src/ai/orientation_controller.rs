@@ -1,19 +1,10 @@
-use std::{collections::VecDeque, f32::consts::PI};
+use std::f32::consts::PI;
 
 use bevy::prelude::*;
-use bevy_rapier2d::dynamics::Velocity;
-
-use crate::{alien_ship::AlienShipMarker, player::PlayerMarker};
-
-use super::ShipAi;
 
 const SHIP_ANGULAR_INERTIA: f32 = 8.0;
 const STABILIZE_ANGULAR_VELOCITY_THRESHOLD: f32 = 2.0 * 2.0 * PI;
 const MIN_ROTATION_THETA: f32 = PI / 24.0; // We're close enough.
-const MAX_CONTROLLER_UPDATES_PER_FRAME: u32 = 50;
-
-#[derive(Resource, Default)]
-pub struct OrientationControllerQueue(pub VecDeque<Entity>);
 
 #[derive(Component)]
 pub struct OrientationController {
@@ -211,43 +202,6 @@ impl OrientationController {
                     // debug!("keep rotating..");
                     (0.0, 0.1)
                 }
-            }
-        }
-    }
-}
-
-pub fn update_orientation_controllers_targets(
-    time: Res<Time>,
-    player: Query<&Transform, With<PlayerMarker>>,
-    mut queue: ResMut<OrientationControllerQueue>,
-    mut ships: Query<
-        (&Transform, &Velocity, &ShipAi, &mut OrientationController),
-        With<AlienShipMarker>,
-    >,
-) {
-    if let Ok(player_t) = player.get_single() {
-        let mut updated_controllers = 0;
-        while let Some(e) = queue.0.pop_front() {
-            if updated_controllers < MAX_CONTROLLER_UPDATES_PER_FRAME {
-                if let Ok((t, v, ai, mut controller)) = ships.get_mut(e) {
-                    match ai.state {
-                        super::AiState::Aggro => {
-                            let local_forward = t.up().xy();
-                            let d = (player_t.translation - t.translation).xy();
-                            controller.target(d.y.atan2(d.x));
-                            let current_orientation = local_forward.y.atan2(local_forward.x);
-                            controller.update_command(&time, current_orientation, v.angvel);
-                            // debug!(
-                            //     "set cmd: torque={}, duration={}",
-                            //     controller.current_command.0,
-                            //     controller.current_command.1 - time.elapsed_seconds()
-                            // );
-                        }
-                    };
-                    updated_controllers += 1;
-                }
-            } else {
-                break;
             }
         }
     }

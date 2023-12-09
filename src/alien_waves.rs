@@ -7,10 +7,7 @@ use rand::prelude::*;
 use std::f32::consts::PI;
 
 use crate::{
-    ai::{
-        orientation_controller::{OrientationController, OrientationControllerQueue},
-        ShipAi,
-    },
+    ai::{orientation_controller::OrientationController, OrientationControllerQueue, ShipAi},
     alien_ship::{
         AlienShipMarker, ALIEN_SHIP_DRIVE_ENGINE_IMPULSE, ALIEN_SHIP_LASER_COOLDOWN_S,
         ALIEN_SHIP_ROTATION_IMPULSE,

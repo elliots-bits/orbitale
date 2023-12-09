@@ -122,7 +122,7 @@ fn main() {
 
     app.add_systems(
         Update,
-        (orientation_controller::update_orientation_controllers_targets)
+        (ai::update_ai_controllers)
             .in_set(AppStage::AI)
             .run_if(in_state(AppState::Game)),
     );
