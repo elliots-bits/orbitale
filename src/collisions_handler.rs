@@ -13,7 +13,7 @@ use crate::{
     lasers::{Laser, LaserOrigin},
     menu::{Difficulty, GameSettings},
     player::PlayerMarker,
-    thruster::{self, Thruster},
+    thruster::{Thruster},
 };
 
 pub fn update(
@@ -92,7 +92,7 @@ pub fn update(
                 player_hp.decrease(hp, settings.difficulty);
 
                 if settings.difficulty == Difficulty::GodMode {
-                    let (gravity, thruster, transform) =
+                    let (gravity, _thruster, _transform) =
                         player_movement_query.get(player_entity).unwrap();
 
                     impulses.send(AddExternalImpulse {

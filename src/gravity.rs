@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::{dynamics::Velocity, geometry::ColliderMassProperties};
 
-use crate::{celestial_body::CircularOrbitChain, impulses_aggregator::AddExternalImpulse};
+use crate::{celestial_body::CircularOrbitChain};
 
 const GRAVITATIONAL_CONSTANT: f32 = 32.0;
 

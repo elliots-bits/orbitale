@@ -70,7 +70,7 @@ pub fn draw(
 }
 
 pub fn spawn(commands: &mut Commands, position: Vec2, velocity: Vec2, props: Laser) {
-    let mut transform = Transform::from_translation(Vec3 {
+    let transform = Transform::from_translation(Vec3 {
         x: position.x,
         y: position.y,
         z: 1.0,

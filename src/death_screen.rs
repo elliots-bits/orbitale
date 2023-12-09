@@ -1,13 +1,11 @@
-use std::{default, fmt::format};
+
 
 use bevy::{
-    asset::meta::Settings,
-    core_pipeline::{bloom::BloomSettings, tonemapping::Tonemapping},
     prelude::*,
     utils::Instant,
 };
-use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
+
+
 
 use crate::{
     menu::GameSettings,
