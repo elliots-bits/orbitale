@@ -67,22 +67,22 @@ fn initialize_game_camera(
             LayerData {
                 speed: LayerSpeed::Bidirectional(0.5, 0.5),
                 repeat: LayerRepeat::Bidirectional(RepeatStrategy::Same, RepeatStrategy::Same),
-                path: "stars_light.png".to_string(),
-                tile_size: Vec2::new(1000.0, 1000.0),
+                path: "stars_light_1.png".to_string(),
+                tile_size: Vec2::new(2000.0, 2000.0),
                 cols: 1,
                 rows: 1,
-                scale: 8.0,
+                scale: 4.0,
                 z: -1.0,
                 ..Default::default()
             },
             LayerData {
                 speed: LayerSpeed::Bidirectional(0.0, 0.0),
                 repeat: LayerRepeat::Bidirectional(RepeatStrategy::Same, RepeatStrategy::Same),
-                path: "stars_light.png".to_string(),
-                tile_size: Vec2::new(1000.0, 1000.0),
+                path: "stars_light_1.png".to_string(),
+                tile_size: Vec2::new(2000.0, 2000.0),
                 cols: 1,
                 rows: 1,
-                scale: 8.0,
+                scale: 4.0,
                 z: -1.0,
                 ..Default::default()
             },
