@@ -29,6 +29,10 @@ impl OrientationController {
         }
     }
 
+    pub fn at_target(&self, p0: f32, epsilon: f32) -> bool {
+        self.shortest_arc(self.rotation_target.unwrap(), p0).abs() < epsilon
+    }
+
     fn to_bounded_positive_angle(a: f32) -> f32 {
         let a = a % (2.0 * PI);
         if a < 0.0 {

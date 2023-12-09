@@ -148,7 +148,8 @@ pub fn draw_hud(
             //     let (theta, r) = (dp.y.atan2(dp.x), dp.length());
             //     let radar_r = world_to_radar(r);
 
-            //     let ship_closing_speed = dv.length() * dv.normalize().dot(dp.normalize());
+            // let ship_closing_speed =
+            //     dv.length() * dv.normalize_or_zero().dot(dp.normalize_or_zero());
 
             //     let speed_color_interp = 1.0
             //         - ((ship_closing_speed + RADAR_COLOR_MAX_SPEED)

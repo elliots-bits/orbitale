@@ -7,10 +7,13 @@ use rand::prelude::*;
 use std::f32::consts::PI;
 
 use crate::{
-    ai::{orientation_controller::OrientationController, OrientationControllerQueue, ShipAi},
+    ai::{
+        orientation_controller::OrientationController, position_controller::PositionController,
+        AIControllerQueues, ShipAi,
+    },
     alien_ship::{
         AlienShipMarker, ALIEN_SHIP_DRIVE_ENGINE_IMPULSE, ALIEN_SHIP_LASER_COOLDOWN_S,
-        ALIEN_SHIP_ROTATION_IMPULSE,
+        ALIEN_SHIP_MASS, ALIEN_SHIP_ROTATION_IMPULSE,
     },
     camera::game_layer,
     course_planner::ComputedTrajectory,
@@ -40,7 +43,7 @@ pub fn setup(mut commands: Commands) {
 
 pub fn update(
     mut commands: Commands,
-    mut controller_queue: ResMut<OrientationControllerQueue>,
+    mut controller_queue: ResMut<AIControllerQueues>,
     time: Res<Time>,
     asset_server: Res<AssetServer>,
     player: Query<&Transform, With<PlayerMarker>>,
@@ -81,6 +84,7 @@ pub fn update(
                     },
                     ShipAi::default(),
                     OrientationController::new(ALIEN_SHIP_ROTATION_IMPULSE),
+                    PositionController::new(ALIEN_SHIP_DRIVE_ENGINE_IMPULSE * 0.75), // smaller than max thrust to leave some error margin on slowdown maneuvers
                     LaserAbility {
                         last_shot: None,
                         cooldown: ALIEN_SHIP_LASER_COOLDOWN_S,
@@ -99,14 +103,14 @@ pub fn update(
                     Ccd::enabled(),
                     RigidBody::Dynamic,
                     Collider::ball(32.0),
-                    ColliderMassProperties::Mass(1.0),
+                    ColliderMassProperties::Mass(ALIEN_SHIP_MASS),
                     Damping {
                         linear_damping: 0.0,
                         angular_damping: 0.5,
                     },
                     Velocity::default(),
                 ));
-                controller_queue.0.push_back(cmd.id());
+                controller_queue.queue_spawned(cmd.id());
             }
             wave.current_wave += 1;
             wave.started_at = Some(time.elapsed_seconds());

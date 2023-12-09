@@ -4,7 +4,10 @@ use bevy::prelude::*;
 use bevy_rapier2d::dynamics::Velocity;
 
 use crate::{
-    ai::{orientation_controller::OrientationController, OrientationControllerQueue},
+    ai::{
+        orientation_controller::OrientationController, position_controller::PositionController,
+        AIControllerQueues,
+    },
     impulses_aggregator::AddExternalImpulse,
     lasers::{self, Laser, LaserAbility, LaserOrigin},
     particles::thrusters::spawn_rotation_thruster_cone,
@@ -14,15 +17,14 @@ use crate::{
 
 pub const ALIEN_SHIP_DRIVE_ENGINE_IMPULSE: f32 = 4.0;
 pub const ALIEN_SHIP_ROTATION_IMPULSE: f32 = 8.0 * ALIEN_SHIP_DRIVE_ENGINE_IMPULSE;
+pub const ALIEN_SHIP_MASS: f32 = 1.0;
 
 pub const ALIEN_SHIP_LASER_COOLDOWN_S: f32 = 1.0;
 
 const MAX_SHOOT_DISTANCE: f32 = 2000.0;
 const MAX_SHOOT_THETA: f32 = PI / 8.0;
-const MAX_DRIVE_THETA: f32 = PI / 8.0;
 
-const ENABLE_SHOOTING: bool = false;
-const AGGRO_RANGE: f32 = 2000.0;
+const ENABLE_SHOOTING: bool = true;
 
 /*
 Draft outline of the ships' AI:
@@ -43,7 +45,7 @@ pub struct AlienShipMarker;
 
 pub fn update(
     mut commands: Commands,
-    mut orientation_controller_queue: ResMut<OrientationControllerQueue>,
+    mut orientation_controller_queue: ResMut<AIControllerQueues>,
     time: Res<Time>,
     mut impulses: EventWriter<AddExternalImpulse>,
     player: Query<&Transform, With<PlayerMarker>>,
@@ -53,6 +55,7 @@ pub fn update(
             &Transform,
             &Velocity,
             &OrientationController,
+            &PositionController,
             &mut LaserAbility,
             &mut Thruster,
         ),
@@ -64,8 +67,15 @@ pub fn update(
 
     // For now, it is very dumb. It aims at the player and accelerates if it points in kinda in the player direction.
     if let Ok(player_t) = player.get_single() {
-        for (entity, t, v, orientation_controller, mut laser_ability, mut thruster) in
-            query.iter_mut()
+        for (
+            entity,
+            t,
+            v,
+            orientation_controller,
+            position_controller,
+            mut laser_ability,
+            mut thruster,
+        ) in query.iter_mut()
         {
             let mut angular_impulse = 0.0;
 
@@ -92,11 +102,7 @@ pub fn update(
                 laser_ability.last_shot = Some(time.elapsed_seconds());
             }
 
-            if orientation_to_player.abs() < MAX_DRIVE_THETA && d.length() > AGGRO_RANGE {
-                thruster.throttle(time.delta_seconds());
-            } else {
-                thruster.release(time.delta_seconds());
-            }
+            let mut request_dynamics_controllers_update = false;
             let (cmd_torque, cmd_end_time) = orientation_controller.current_command;
             if time.elapsed_seconds() < cmd_end_time && cmd_torque.abs() > 0.01 {
                 angular_impulse += cmd_torque;
@@ -109,15 +115,20 @@ pub fn update(
                     v.linvel,
                     t.down().xy().normalize() * cmd_torque.signum(),
                 );
-                // spawn_rotation_thruster_cone(
-                //     &mut commands,
-                //     &time,
-                //     xy + t.left().xy().normalize() * particle_distance,
-                //     v.linvel,
-                //     t.up().xy().normalize() * cmd_torque.signum(),
-                // );
             } else {
-                orientation_controller_queue.0.push_back(entity);
+                request_dynamics_controllers_update = true;
+            }
+
+            let (cmd_thrust, cmd_end_time) = position_controller.current_command;
+            if time.elapsed_seconds() < cmd_end_time && cmd_thrust.abs() > 0.01 {
+                thruster.throttle(time.delta_seconds());
+            } else {
+                thruster.release(time.delta_seconds());
+                request_dynamics_controllers_update = true;
+            }
+
+            if request_dynamics_controllers_update {
+                orientation_controller_queue.controllers.push_back(entity);
             }
             impulses.send(AddExternalImpulse {
                 entity,

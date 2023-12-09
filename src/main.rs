@@ -20,7 +20,6 @@ mod system_sets;
 mod thruster;
 mod ui;
 
-use ai::orientation_controller;
 use bevy::{
     a11y::AccessibilityPlugin, audio::AudioPlugin, core_pipeline::CorePipelinePlugin,
     diagnostic::DiagnosticsPlugin, input::InputPlugin, log::LogPlugin, prelude::*,
@@ -85,7 +84,7 @@ fn main() {
     app.insert_resource(RapierConfiguration {
         gravity: Vec2::ZERO,
         timestep_mode: TimestepMode::Variable {
-            max_dt: 1.0 / 60.0,
+            max_dt: 1.0 / 20.0,
             time_scale: 1.0,
             substeps: 2,
         },
@@ -122,7 +121,8 @@ fn main() {
 
     app.add_systems(
         Update,
-        (ai::update_ai_controllers)
+        (ai::update_ai_states, ai::update_ai_controllers)
+            .chain()
             .in_set(AppStage::AI)
             .run_if(in_state(AppState::Game)),
     );
