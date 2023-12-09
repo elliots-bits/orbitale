@@ -13,7 +13,7 @@ use crate::{
     lasers::{Laser, LaserOrigin},
     menu::{Difficulty, GameSettings},
     player::PlayerMarker,
-    thruster::{Thruster},
+    thruster::Thruster,
 };
 
 pub fn update(

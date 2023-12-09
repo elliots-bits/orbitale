@@ -1,11 +1,4 @@
-
-
-use bevy::{
-    prelude::*,
-    utils::Instant,
-};
-
-
+use bevy::{prelude::*, utils::Instant};
 
 use crate::{
     menu::GameSettings,
@@ -14,7 +7,6 @@ use crate::{
 };
 
 const PRIMARY_COLOR: Color = Color::rgb(0.95, 0.95, 0.95);
-const SECONDARY_COLOR: Color = Color::rgb(0.30, 0.30, 0.30);
 
 #[derive(Component)]
 pub struct MenuButton;
