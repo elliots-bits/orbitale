@@ -141,52 +141,52 @@ pub fn draw_hud(
                 min: cam_area.min + cam_pos,
                 max: cam_area.max + cam_pos,
             };
-            // for (at, av) in alien_ships.iter() {
-            //     let dp = at.translation.xy() - pt.translation.xy();
-            //     let dv = av.linvel - pv.linvel;
+            for (at, av) in alien_ships.iter() {
+                let dp = at.translation.xy() - pt.translation.xy();
+                let dv = av.linvel - pv.linvel;
 
-            //     let (theta, r) = (dp.y.atan2(dp.x), dp.length());
-            //     let radar_r = world_to_radar(r);
+                let (theta, r) = (dp.y.atan2(dp.x), dp.length());
+                let radar_r = world_to_radar(r);
 
-            // let ship_closing_speed =
-            //     dv.length() * dv.normalize_or_zero().dot(dp.normalize_or_zero());
+                let ship_closing_speed =
+                    dv.length() * dv.normalize_or_zero().dot(dp.normalize_or_zero());
 
-            //     let speed_color_interp = 1.0
-            //         - ((ship_closing_speed + RADAR_COLOR_MAX_SPEED)
-            //             / (RADAR_COLOR_MAX_SPEED * 2.0))
-            //             .clamp(0.0, 1.0);
-            //     let ship_radar_color = ship_color_gradient.0.at(speed_color_interp.into());
+                let speed_color_interp = 1.0
+                    - ((ship_closing_speed + RADAR_COLOR_MAX_SPEED)
+                        / (RADAR_COLOR_MAX_SPEED * 2.0))
+                        .clamp(0.0, 1.0);
+                let ship_radar_color = ship_color_gradient.0.at(speed_color_interp.into());
 
-            //     painter.set_translation(Vec3 {
-            //         x: theta.cos() * radar_r,
-            //         y: theta.sin() * radar_r,
-            //         z: 0.0,
-            //     });
-            //     painter.color = Color::rgba(
-            //         ship_radar_color.r as f32,
-            //         ship_radar_color.g as f32,
-            //         ship_radar_color.b as f32,
-            //         RADAR_ENTITIES_ALPHA,
-            //     );
-            //     painter.hollow = true;
+                painter.set_translation(Vec3 {
+                    x: theta.cos() * radar_r,
+                    y: theta.sin() * radar_r,
+                    z: 0.0,
+                });
+                painter.color = Color::rgba(
+                    ship_radar_color.r as f32,
+                    ship_radar_color.g as f32,
+                    ship_radar_color.b as f32,
+                    RADAR_ENTITIES_ALPHA,
+                );
+                painter.hollow = true;
 
-            //     let max_radar_range = RADAR_HUD_OUTER_RADIUS / RADAR_HUD_SCALE;
-            //     let size = ((max_radar_range - r) / max_radar_range).clamp(3.0, 6.0);
+                let max_radar_range = RADAR_HUD_OUTER_RADIUS / RADAR_HUD_SCALE;
+                let size = ((max_radar_range - r) / max_radar_range).clamp(3.0, 6.0);
 
-            //     painter.thickness = (size / 4.0).clamp(0.0, 1.0);
-            //     painter.set_rotation(Quat::from_axis_angle(Vec3::Z, dv.y.atan2(dv.x)));
-            //     painter.rect(Vec2::splat(size));
+                painter.thickness = (size / 4.0).clamp(0.0, 1.0);
+                painter.set_rotation(Quat::from_axis_angle(Vec3::Z, dv.y.atan2(dv.x)));
+                painter.rect(Vec2::splat(size));
 
-            //     if abs_cam_area.contains(at.translation.xy()) {
-            //         // Highlight ship
-            //         painter.set_translation(dp.extend(0.0) / cam_proj.scale);
-            //         painter.set_rotation(Quat::default());
-            //         painter.hollow = true;
-            //         painter.thickness = 1.0;
-            //         painter.color = Color::hex("ff3030ff").unwrap();
-            //         painter.rect(Vec2::splat((64.0 / cam_proj.scale).max(10.0)));
-            //     }
-            // }
+                if abs_cam_area.contains(at.translation.xy()) {
+                    // Highlight ship
+                    painter.set_translation(dp.extend(0.0) / cam_proj.scale);
+                    painter.set_rotation(Quat::default());
+                    painter.hollow = true;
+                    painter.thickness = 1.0;
+                    painter.color = Color::hex("ff3030ff").unwrap();
+                    painter.rect(Vec2::splat((64.0 / cam_proj.scale).max(10.0)));
+                }
+            }
 
             for (at, collider) in celestial_bodies.iter() {
                 let dp = at.translation.xy() - pt.translation.xy();
