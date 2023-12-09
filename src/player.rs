@@ -18,7 +18,7 @@ use crate::{
 const PLAYER_MASS: f32 = 4.0;
 const DRIVE_ENGINE_MAX_IMPULSE: f32 = 8.0 * PLAYER_MASS;
 const DRIVE_ENGINE_INIT_IMPULSE: f32 = 3.0 * PLAYER_MASS;
-const ROTATION_IMPULSE: f32 = 6.0 * DRIVE_ENGINE_MAX_IMPULSE;
+const ROTATION_IMPULSE: f32 = 10.0 * DRIVE_ENGINE_MAX_IMPULSE;
 
 const LASER_COOLDOWN_S: f32 = 0.02;
 
@@ -134,8 +134,8 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         ComputedTrajectory::default(),
         SpriteBundle {
-            texture: asset_server.load("spaceship_dev1.png"),
-            transform: Transform::from_translation(Vec3::ZERO),
+            texture: asset_server.load("player_ship.png"),
+            transform: Transform::from_translation(Vec3::ZERO).with_scale(Vec3::splat(1.5)),
             ..default()
         },
         Ccd::enabled(),

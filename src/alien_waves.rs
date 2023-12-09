@@ -90,7 +90,7 @@ pub fn update(
                     },
                     ComputedTrajectory::default(),
                     SpriteBundle {
-                        texture: asset_server.load("spaceship_dev1.png"),
+                        texture: asset_server.load("enemy_ship.png"),
                         transform: Transform::from_translation(pos),
                         ..default()
                     },
