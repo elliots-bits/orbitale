@@ -89,17 +89,16 @@ impl CircularOrbitChain {
 
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // This is this environment generation.
-    let sprite_radius = 585.0;
-    let texture = asset_server.load("mike-petrucci-moon.png");
+    let sprite_radius = 500.0;
 
     let mut parent_moon_node = OrbitHierarchyNode::start(Vec2 {
-        x: 100000.0,
-        y: 100000.0,
+        x: 10000.0,
+        y: 10000.0,
     });
     commands.spawn(gen_body_bundle(
         &parent_moon_node,
         5.0,
-        &texture,
+        asset_server.load("planet_big.png"),
         sprite_radius,
         5e7,
     ));
@@ -113,7 +112,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         commands.spawn(gen_body_bundle(
             child_moon_node,
             1.5,
-            &texture,
+            asset_server.load("planet_small_0.png"),
             sprite_radius,
             1e7,
         ));
@@ -126,7 +125,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         commands.spawn(gen_body_bundle(
             child_child_moon_node,
             0.5,
-            &texture,
+            asset_server.load("planet_small_3.png"),
             sprite_radius,
             4e6,
         ));
@@ -143,7 +142,13 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             radius: 0.08 * SYSTEM_DISTANCE_SCALE,
             freq: 1.0,
         });
-        commands.spawn(gen_body_bundle(binary_a, 0.5, &texture, sprite_radius, 3e6));
+        commands.spawn(gen_body_bundle(
+            binary_a,
+            0.5,
+            asset_server.load("planet_small_2.png"),
+            sprite_radius,
+            3e6,
+        ));
     }
     {
         let binary_b = child_binary_center.with_child(CircularOrbitDef {
@@ -151,7 +156,13 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             radius: 0.08 * SYSTEM_DISTANCE_SCALE,
             freq: 1.0,
         });
-        commands.spawn(gen_body_bundle(binary_b, 0.5, &texture, sprite_radius, 3e6));
+        commands.spawn(gen_body_bundle(
+            binary_b,
+            0.5,
+            asset_server.load("planet_small_1.png"),
+            sprite_radius,
+            3e6,
+        ));
     }
 
     commands.insert_resource(OrbitHierarchy {
@@ -162,7 +173,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn gen_body_bundle(
     node: &OrbitHierarchyNode,
     scale: f32,
-    texture: &Handle<Image>,
+    texture: Handle<Image>,
     sprite_radius: f32,
     mass: f32,
 ) -> impl Bundle {
