@@ -98,20 +98,41 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // This is this environment generation.
     let sprite_radius = 500.0;
 
-    let mut parent_moon_node = OrbitHierarchyNode::start(Vec2 {
-        x: 10000.0,
-        y: 10000.0,
+    let mut parent_saturn = OrbitHierarchyNode::start(Vec2 {
+        x: -10000.0,
+        y: -10000.0,
     });
     commands.spawn(gen_body_bundle(
-        &parent_moon_node,
+        &parent_saturn,
         5.0,
         asset_server.load("planet_big.png"),
         sprite_radius,
         5e7,
     ));
 
+    let mut parent_volcanic = OrbitHierarchyNode::start(Vec2 { x: 0.0, y: 50000.0 });
+    commands.spawn(gen_body_bundle(
+        &parent_volcanic,
+        5.0,
+        asset_server.load("planet_big_1.png"),
+        sprite_radius,
+        5e7,
+    ));
+
+    let mut parent_pink_rock = OrbitHierarchyNode::start(Vec2 {
+        x: 70000.0,
+        y: -70000.0,
+    });
+    commands.spawn(gen_body_bundle(
+        &parent_pink_rock,
+        5.0,
+        asset_server.load("planet_pink_shiny_rock.png"),
+        sprite_radius,
+        5e7,
+    ));
+
     {
-        let child_moon_node = parent_moon_node.with_child(CircularOrbitDef {
+        let child_moon_node = parent_saturn.with_child(CircularOrbitDef {
             theta: 0.0,
             radius: 4.0 * SYSTEM_DISTANCE_SCALE,
             freq: 1.0 / 300.0,
@@ -145,7 +166,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ));
     }
 
-    let child_binary_center = parent_moon_node.with_child(CircularOrbitDef {
+    let child_binary_center = parent_saturn.with_child(CircularOrbitDef {
         theta: PI,
         radius: 8.0 * SYSTEM_DISTANCE_SCALE,
         freq: 1.0 / 600.0,
@@ -180,7 +201,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     }
 
     commands.insert_resource(OrbitHierarchy {
-        roots: vec![parent_moon_node],
+        roots: vec![parent_saturn, parent_volcanic, parent_pink_rock],
     });
 }
 
