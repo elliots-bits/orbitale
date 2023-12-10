@@ -6,7 +6,7 @@ use bevy_rapier2d::dynamics::Velocity;
 use crate::{
     ai::{
         orientation_controller::OrientationController, position_controller::PositionController,
-        AIControllerQueues,
+        AIControllerQueues, AGGRO_RANGE,
     },
     camera::GameCameraMarker,
     impulses_aggregator::AddExternalImpulse,
@@ -24,8 +24,7 @@ pub const ALIEN_SHIP_MASS: f32 = 1.0;
 
 pub const ALIEN_SHIP_LASER_COOLDOWN_S: f32 = 1.0;
 
-const MAX_SHOOT_DISTANCE: f32 = 2000.0;
-const MAX_SHOOT_THETA: f32 = PI / 8.0;
+const MAX_SHOOT_THETA: f32 = PI / 16.0;
 
 const ENABLE_SHOOTING: bool = true;
 
@@ -95,7 +94,7 @@ pub fn update(
                 let d = (player_t.translation - t.translation).xy();
                 let orientation_to_player = local_forward.angle_between(d);
                 if ENABLE_SHOOTING
-                    && d.length() < MAX_SHOOT_DISTANCE
+                    && d.length() < AGGRO_RANGE
                     && orientation_to_player.abs() < MAX_SHOOT_THETA
                     && laser_ability.ready(&time)
                 {

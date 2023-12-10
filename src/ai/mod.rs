@@ -17,9 +17,9 @@ use self::{
 
 const MAX_AI_STATE_UPDATES_PER_FRAME: u32 = 1000;
 const MAX_DYNAMICS_CONTROLLERS_UPDATES_PER_FRAME: u32 = 250;
-const MIN_DELTA_V: f32 = 50.0;
-const MATCH_DELTA_V_THRESHOLD: f32 = 5000.0;
-const AGGRO_RANGE: f32 = 1250.0;
+const MIN_DELTA_V: f32 = 10.0;
+const MATCH_DELTA_V_THRESHOLD: f32 = 20000.0;
+pub const AGGRO_RANGE: f32 = 1600.0;
 
 #[derive(Resource, Default)]
 pub struct AIControllerQueues {
@@ -29,8 +29,8 @@ pub struct AIControllerQueues {
 
 impl AIControllerQueues {
     pub fn queue_spawned(&mut self, entity: Entity) {
-        self.ai_state.push_back(entity);
-        self.controllers.push_back(entity);
+        self.ai_state.push_front(entity);
+        self.controllers.push_front(entity);
     }
 }
 
@@ -141,7 +141,7 @@ pub fn update_ai_controllers(
                                 // debug!("Braking");
                                 o_controller.target(dv.y.atan2(dv.x) + 2.0 * PI);
                                 o_controller.update_command(&time, current_orientation, v.angvel);
-                                if o_controller.at_target(current_orientation, PI / 8.0) {
+                                if o_controller.at_target(current_orientation, PI / 12.0) {
                                     p_controller.accelerate(&time, 0.05);
                                 }
                             } else {
@@ -160,7 +160,7 @@ pub fn update_ai_controllers(
                                 // debug!("aiming at: {}", orientation);
                                 o_controller.target(orientation);
                                 o_controller.update_command(&time, current_orientation, v.angvel);
-                                if o_controller.at_target(current_orientation, PI / 8.0)
+                                if o_controller.at_target(current_orientation, PI / 20.0)
                                     && drift.length() > MIN_DELTA_V
                                 {
                                     // debug!("accelerating");
@@ -175,7 +175,7 @@ pub fn update_ai_controllers(
                             let orientation = dv.y.atan2(dv.x);
                             o_controller.target(orientation);
                             o_controller.update_command(&time, current_orientation, v.angvel);
-                            if o_controller.at_target(current_orientation, PI / 16.0) {
+                            if o_controller.at_target(current_orientation, PI / 24.0) {
                                 let tts = p_controller.time_to_stop(dv.length());
                                 p_controller
                                     .accelerate(&time, (tts / 2.0 - 0.1).max(0.01).min(0.25));

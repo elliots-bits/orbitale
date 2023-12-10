@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::alien_ship::ALIEN_SHIP_MASS;
+use crate::{alien_ship::ALIEN_SHIP_MASS, GLOBAL_IMPULSE_DURATION_MULT};
 
 #[derive(Component)]
 pub struct PositionController {
@@ -29,7 +29,7 @@ impl PositionController {
 
     #[inline]
     pub fn time_to_stop(&self, v0: f32) -> f32 {
-        v0 * ALIEN_SHIP_MASS / (self.thrust_available * 128.0)
+        v0 * ALIEN_SHIP_MASS / (self.thrust_available * GLOBAL_IMPULSE_DURATION_MULT)
     }
 
     pub fn should_brake(&self, d: f32, v0: f32) -> bool {
