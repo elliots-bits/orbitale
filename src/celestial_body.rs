@@ -13,6 +13,13 @@ const SYSTEM_DISTANCE_SCALE: f32 = 10000.0;
 #[derive(Component)]
 pub struct CelestialBodyMarker;
 
+#[derive(Component)]
+pub struct StarterPlanetMarker {
+    pub orbit_radius: f32,
+    pub theta: f32,
+    pub velocity: Vec2,
+}
+
 #[derive(Resource)]
 pub struct OrbitHierarchy {
     pub roots: Vec<OrbitHierarchyNode>,
@@ -122,12 +129,19 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             radius: 1.0 * SYSTEM_DISTANCE_SCALE,
             freq: 1.0 / 40.0,
         });
-        commands.spawn(gen_body_bundle(
-            child_child_moon_node,
-            0.5,
-            asset_server.load("planet_small_3.png"),
-            sprite_radius,
-            4e6,
+        commands.spawn((
+            gen_body_bundle(
+                child_child_moon_node,
+                0.5,
+                asset_server.load("planet_small_3.png"),
+                sprite_radius,
+                4e6,
+            ),
+            StarterPlanetMarker {
+                orbit_radius: 1500.0,
+                theta: PI / 2.0,
+                velocity: -Vec2::X * 1000.0,
+            },
         ));
     }
 

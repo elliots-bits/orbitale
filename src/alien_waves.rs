@@ -22,7 +22,7 @@ use crate::{
     lasers::LaserAbility,
     player::PlayerMarker,
     thruster::Thruster,
-    ui::{EntitiesQuantity, GameSettings},
+    ui::{Difficulty, EntitiesQuantity, GameSettings},
 };
 use rand::distributions::Uniform;
 
@@ -92,6 +92,15 @@ pub fn update(
                 0.0,
             );
 
+            let (difficulty_engine_multiplier, difficulty_rotation_multiplier) =
+                match settings.difficulty {
+                    Difficulty::GodMode => (0.75, 0.75),
+                    Difficulty::Easy => (0.75, 0.75),
+                    Difficulty::Normal => (1.0, 1.0),
+                    Difficulty::Hard => (2.0, 1.33),
+                    Difficulty::Impossible => (4.0, 1.6),
+                };
+
             for _ in 0..n_to_spawn {
                 let r = rng.sample(radius_side);
                 let theta = rng.sample(angle_side);
@@ -107,15 +116,22 @@ pub fn update(
                         current: 10.0,
                     },
                     Thruster {
-                        max_thrust: ALIEN_SHIP_DRIVE_ENGINE_IMPULSE,
+                        max_thrust: ALIEN_SHIP_DRIVE_ENGINE_IMPULSE * difficulty_engine_multiplier,
                         current_thrust: 0.0,
-                        rampup_rate: 2.0,
-                        shutoff_rate: 7.0,
-                        ignition_thrust: 2.0,
+                        rampup_rate: 2.0 * difficulty_engine_multiplier,
+                        shutoff_rate: ALIEN_SHIP_DRIVE_ENGINE_IMPULSE
+                            * difficulty_engine_multiplier,
+                        ignition_thrust: ALIEN_SHIP_DRIVE_ENGINE_IMPULSE
+                            * difficulty_engine_multiplier
+                            / 2.0,
                     },
                     ShipAi::default(),
-                    OrientationController::new(ALIEN_SHIP_ROTATION_IMPULSE),
-                    PositionController::new(ALIEN_SHIP_DRIVE_ENGINE_IMPULSE * 0.75), // smaller than max thrust to leave some error margin on slowdown maneuvers
+                    OrientationController::new(
+                        ALIEN_SHIP_ROTATION_IMPULSE * difficulty_rotation_multiplier,
+                    ),
+                    PositionController::new(
+                        ALIEN_SHIP_DRIVE_ENGINE_IMPULSE * difficulty_engine_multiplier * 0.75,
+                    ), // smaller than max thrust to leave some error margin on slowdown maneuvers
                     LaserAbility {
                         last_shot: None,
                         cooldown: ALIEN_SHIP_LASER_COOLDOWN_S,

@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::prelude::*;
 use bevy_rapier2d::{
     dynamics::{Ccd, Damping, RigidBody, Velocity},
@@ -6,6 +8,7 @@ use bevy_rapier2d::{
 
 use crate::{
     camera::game_layer,
+    celestial_body::{CircularOrbitChain, StarterPlanetMarker},
     course_planner::ComputedTrajectory,
     gravity::AffectedByGravity,
     healthpoints::HealthPoints,
@@ -120,44 +123,62 @@ pub fn control(
     }
 }
 
-pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    debug!("Player setup");
-    commands.spawn((
-        PlayerMarker,
-        HealthPoints {
-            max: STARTING_HP,
-            current: STARTING_HP,
-        },
-        Thruster {
-            max_thrust: DRIVE_ENGINE_MAX_IMPULSE,
-            current_thrust: 0.0,
-            rampup_rate: 10.0,
-            shutoff_rate: DRIVE_ENGINE_MAX_IMPULSE * 2.0,
-            ignition_thrust: DRIVE_ENGINE_INIT_IMPULSE,
-        },
-        LaserAbility {
-            last_shot: None,
-            cooldown: LASER_COOLDOWN_S,
-        },
-        ComputedTrajectory::default(),
-        SpriteBundle {
-            texture: asset_server.load("player_ship.png"),
-            transform: Transform::from_translation(Vec3::ZERO).with_scale(Vec3::splat(1.5)),
-            ..default()
-        },
-        Ccd::enabled(),
-        RigidBody::Dynamic,
-        Collider::ball(32.0),
-        ColliderMassProperties::Mass(PLAYER_MASS),
-        Damping {
-            linear_damping: 0.0,
-            angular_damping: 2.0,
-        },
-        Velocity::zero(),
-        ActiveEvents::COLLISION_EVENTS,
-        AffectedByGravity::default(),
-        game_layer(),
-    ));
+pub fn setup(
+    mut commands: Commands,
+    player: Query<&PlayerMarker>,
+    asset_server: Res<AssetServer>,
+    starter_planet: Query<(&StarterPlanetMarker, &CircularOrbitChain)>,
+) {
+    if player.is_empty() {
+        debug!("Player setup");
+        if let Ok((player_orbit, planet)) = starter_planet.get_single() {
+            let planet_pos = planet.pos(0.0);
+            let player_pos = Vec2 {
+                x: player_orbit.theta.cos() * player_orbit.orbit_radius,
+                y: player_orbit.theta.sin() * player_orbit.orbit_radius,
+            } + planet_pos;
+            commands.spawn((
+                PlayerMarker,
+                HealthPoints {
+                    max: STARTING_HP,
+                    current: STARTING_HP,
+                },
+                Thruster {
+                    max_thrust: DRIVE_ENGINE_MAX_IMPULSE,
+                    current_thrust: 0.0,
+                    rampup_rate: 10.0,
+                    shutoff_rate: DRIVE_ENGINE_MAX_IMPULSE * 2.0,
+                    ignition_thrust: DRIVE_ENGINE_INIT_IMPULSE,
+                },
+                LaserAbility {
+                    last_shot: None,
+                    cooldown: LASER_COOLDOWN_S,
+                },
+                ComputedTrajectory::default(),
+                SpriteBundle {
+                    texture: asset_server.load("player_ship.png"),
+                    transform: Transform::from_translation(player_pos.extend(0.0))
+                        .with_scale(Vec3::splat(1.5)),
+                    ..default()
+                },
+                Ccd::enabled(),
+                RigidBody::Dynamic,
+                Collider::ball(32.0),
+                ColliderMassProperties::Mass(PLAYER_MASS),
+                Damping {
+                    linear_damping: 0.0,
+                    angular_damping: 2.0,
+                },
+                Velocity {
+                    linvel: player_orbit.velocity,
+                    angvel: PI,
+                },
+                ActiveEvents::COLLISION_EVENTS,
+                AffectedByGravity::default(),
+                game_layer(),
+            ));
+        }
+    }
 }
 
 pub fn cleanup(mut commands: Commands, query: Query<Entity, With<PlayerMarker>>) {

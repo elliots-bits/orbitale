@@ -142,6 +142,8 @@ pub fn update(
                 } else if time.elapsed_seconds() > cmd_end_time {
                     thruster.release(time.delta_seconds());
                     request_dynamics_controllers_update = true;
+                } else {
+                    thruster.release(time.delta_seconds());
                 }
 
                 if request_dynamics_controllers_update {

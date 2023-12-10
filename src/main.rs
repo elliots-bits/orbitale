@@ -101,14 +101,9 @@ fn main() {
 
     app.add_systems(
         OnEnter(AppState::Game),
-        (
-            player::setup,
-            alien_waves::setup,
-            celestial_body::setup,
-            ai::setup,
-        )
-            .chain(),
+        (celestial_body::setup, alien_waves::setup, ai::setup).chain(),
     );
+    app.add_systems(Update, (player::setup,).run_if(in_state(AppState::Game)));
 
     app.add_systems(
         Update,

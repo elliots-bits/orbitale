@@ -71,14 +71,22 @@ pub fn score_multiplier(settings: &Res<GameSettings>) -> i32 {
     }
 }
 
+pub fn time_power(settings: &Res<GameSettings>) -> f32 {
+    match settings.difficulty {
+        Difficulty::Hard => 1.45,
+        Difficulty::Impossible => 1.6,
+        _ => 1.2,
+    }
+}
+
 pub fn compute_score(score: &Res<Score>, settings: &Res<GameSettings>) -> i32 {
     let score_multiplier = score_multiplier(settings);
     let enemies_killed = (score.enemies_killed * 10) as i32;
     let game_duration = Instant::now()
         .duration_since(score.time_game_start)
-        .as_secs() as i32;
+        .as_secs_f32();
 
-    (enemies_killed - game_duration) * score_multiplier
+    (enemies_killed - game_duration.powf(time_power(settings)).round() as i32) * score_multiplier
 }
 
 fn update_score_hud(
