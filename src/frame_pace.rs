@@ -8,7 +8,7 @@ pub fn setup(app: &mut App) {
 
 fn update_frame_pace(mut settings: ResMut<FramepaceSettings>, keys: Res<Input<KeyCode>>) {
     if keys.pressed(KeyCode::F1) {
-        settings.limiter = Limiter::from_framerate(10.0);
+        settings.limiter = Limiter::from_framerate(20.0);
     }
     if keys.pressed(KeyCode::F2) {
         settings.limiter = Limiter::from_framerate(30.0);
