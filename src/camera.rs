@@ -24,6 +24,9 @@ pub struct GameCameraMarker;
 #[derive(Component)]
 pub struct UICameraMarker;
 
+#[derive(Component)]
+pub struct ParticlesCameraMarker;
+
 pub fn setup(app: &mut App) {
     app.add_systems(
         OnEnter(AppState::Game),
@@ -119,7 +122,7 @@ fn initialize_ui_camera(mut commands: Commands) {
     commands.spawn((
         Camera2dBundle {
             camera: Camera {
-                order: 1,
+                order: 2,
                 output_mode: CameraOutputMode::Write {
                     blend_state: Some(BlendState::PREMULTIPLIED_ALPHA_BLENDING),
                     color_attachment_load_op: LoadOp::Load,
@@ -127,7 +130,7 @@ fn initialize_ui_camera(mut commands: Commands) {
                 ..default()
             },
             camera_2d: Camera2d {
-                clear_color: ClearColorConfig::Custom(Color::hex("00000000").unwrap()),
+                clear_color: ClearColorConfig::None,
             },
             ..default()
         },

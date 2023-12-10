@@ -18,12 +18,9 @@ pub fn setup(app: &mut App) {
             AppStage::AI,
             AppStage::Control,
             AppStage::Simulation,
-            // PhysicsSet::SyncBackend,
-            // PhysicsSet::StepSimulation,
-            // PhysicsSet::Writeback,
             AppStage::AggregateImpulses,
-            AppStage::Draw,
             AppStage::Trajectories,
+            AppStage::Draw,
             AppStage::DespawnQueue,
         )
             .chain(),

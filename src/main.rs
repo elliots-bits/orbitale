@@ -147,9 +147,11 @@ fn main() {
     );
     app.add_systems(
         Update,
-        (lasers::draw, particles::draw)
+        (lasers::draw, particles::draw, ui::radar::draw_radar_hud)
+            .chain()
             .in_set(AppStage::Draw)
             .run_if(in_state(AppState::Game)),
     );
+    app.insert_resource(ClearColor(Color::rgba(0.0, 0.0, 0.0, 0.0)));
     app.run();
 }

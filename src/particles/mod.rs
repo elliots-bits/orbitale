@@ -7,7 +7,11 @@ use bevy_vector_shapes::{
     shapes::{DiscPainter, RectPainter},
 };
 
-use crate::{camera::GAME_LAYER, despawn_queue::DespawnQueue};
+use crate::{
+    camera::{GameCameraMarker, UI_LAYER},
+    despawn_queue::DespawnQueue,
+    player::PlayerMarker,
+};
 
 #[derive(Component)]
 pub struct Particle {
@@ -53,44 +57,67 @@ pub fn update(
     }
 }
 
-pub fn draw(mut painter: ShapePainter, time: Res<Time>, particles: Query<(&Particle, &Transform)>) {
-    for (particle, transform) in particles.iter() {
-        painter.reset();
-        painter.set_2d();
-        painter.render_layers = Some(RenderLayers::layer(GAME_LAYER));
-        painter.set_rotation(transform.rotation);
-        painter.set_translation(transform.translation);
-        painter.hollow = false;
-        let lifetime_frac =
-            ((time.elapsed_seconds() - particle.spawned_at) / particle.lifetime).clamp(0.0, 1.0);
-        match &particle.kind {
-            ParticleKind::Combustion {
-                init_radius,
-                end_radius,
-                color,
-            } => {
-                let color = color.at(lifetime_frac as f64);
-                painter.color = Color::rgba(
-                    color.r as f32,
-                    color.g as f32,
-                    color.b as f32,
-                    color.a as f32,
-                );
-                painter.circle(lerp(*init_radius, *end_radius, lifetime_frac.powf(2.0)));
-            }
-            ParticleKind::Spark {
-                init_size,
-                end_size,
-                color,
-            } => {
-                let color = color.at(lifetime_frac as f64);
-                painter.color = Color::rgba(
-                    color.r as f32,
-                    color.g as f32,
-                    color.b as f32,
-                    color.a as f32,
-                );
-                painter.rect(init_size.lerp(*end_size, lifetime_frac));
+pub fn draw(
+    camera: Query<&OrthographicProjection, With<GameCameraMarker>>,
+    mut painter: ShapePainter,
+    player: Query<(&Transform, &Velocity), With<PlayerMarker>>,
+    time: Res<Time>,
+    particles: Query<(&Particle, &Transform)>,
+) {
+    // We're are rendering on the UI layer with horrible tricks
+    // because there is a bug somewhere in bevy_vector_shapes that affects WebGL rendering
+    // and causes flickers on the radar IF we render this on the game layer.
+    // does not seem like a z-fighting or concurrency issue
+    // haven't figured out the root cause yet.
+    if let Ok(cam_proj) = camera.get_single() {
+        if let Ok((pt, pv)) = player.get_single() {
+            for (particle, transform) in particles.iter() {
+                let pos = transform.translation
+                    - pt.translation
+                    - (pv.linvel * time.delta_seconds()).extend(0.0);
+                painter.reset();
+                painter.set_2d();
+
+                painter.render_layers = Some(RenderLayers::layer(UI_LAYER));
+                painter.set_rotation(transform.rotation);
+                painter.set_translation(pos / cam_proj.scale);
+                painter.hollow = false;
+                let lifetime_frac = ((time.elapsed_seconds() - particle.spawned_at)
+                    / particle.lifetime)
+                    .clamp(0.0, 1.0);
+                match &particle.kind {
+                    ParticleKind::Combustion {
+                        init_radius,
+                        end_radius,
+                        color,
+                    } => {
+                        let color = color.at(lifetime_frac as f64);
+                        painter.color = Color::rgba(
+                            color.r as f32,
+                            color.g as f32,
+                            color.b as f32,
+                            color.a as f32,
+                        );
+                        painter.circle(
+                            lerp(*init_radius, *end_radius, lifetime_frac.powf(2.0))
+                                / cam_proj.scale,
+                        );
+                    }
+                    ParticleKind::Spark {
+                        init_size,
+                        end_size,
+                        color,
+                    } => {
+                        let color = color.at(lifetime_frac as f64);
+                        painter.color = Color::rgba(
+                            color.r as f32,
+                            color.g as f32,
+                            color.b as f32,
+                            color.a as f32,
+                        );
+                        painter.rect(init_size.lerp(*end_size, lifetime_frac) / cam_proj.scale);
+                    }
+                }
             }
         }
     }

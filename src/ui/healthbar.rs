@@ -2,15 +2,23 @@ use bevy::{prelude::*, render::view::RenderLayers, window::PrimaryWindow};
 
 use bevy_vector_shapes::{painter::ShapePainter, shapes::RectPainter};
 
-use crate::{camera::UI_LAYER, healthpoints::HealthPoints, player::PlayerMarker};
+use crate::{
+    camera::UI_LAYER, healthpoints::HealthPoints, player::PlayerMarker, system_sets::AppStage,
+    AppState,
+};
 
 const BAR_SIZE: Vec2 = Vec2 { x: 300.0, y: 25.0 };
 
 pub fn setup(app: &mut App) {
-    app.add_systems(Update, draw_healthbar);
+    app.add_systems(
+        Update,
+        draw_healthbar
+            .in_set(AppStage::Draw)
+            .run_if(in_state(AppState::Game)),
+    );
 }
 
-fn draw_healthbar(
+pub fn draw_healthbar(
     mut painter: ShapePainter,
     q_window: Query<&Window, With<PrimaryWindow>>,
     player_hp: Query<&HealthPoints, With<PlayerMarker>>,
@@ -28,6 +36,7 @@ fn draw_healthbar(
             -win.height() / 2.0 + BAR_SIZE.y / 2.0 + 20.0,
             0.0,
         ));
+
         painter.render_layers = Some(RenderLayers::layer(UI_LAYER));
         painter.color = Color::rgba((1.0 - hp_frac).powf(0.5), hp_frac.powf(0.5), 0.0, 1.0);
         painter.corner_radii = Vec4::splat(0.0);

@@ -4,7 +4,7 @@ mod death_screen;
 mod diagnostics;
 mod healthbar;
 mod menu;
-mod radar;
+pub mod radar;
 mod score;
 
 pub use menu::{Difficulty, EntitiesQuantity, GameSettings};

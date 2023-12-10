@@ -14,8 +14,8 @@ use crate::{
 pub const PLAYER_PLAN_DURATION: f32 = 30.0;
 pub const PLAYER_PLAN_STEP_DT: f32 = 0.05;
 
-const MAX_ENEMY_TRAJECTORIES_COMPUTED_PER_FRAME: u32 = 2;
-const STALE_TRAJECTORY_AGE: f32 = 1.0;
+const MAX_ENEMY_TRAJECTORIES_COMPUTED_PER_FRAME: u32 = 20;
+const STALE_TRAJECTORY_AGE: f32 = 5.0;
 const ENEMY_PLAN_DURATION: f32 = 15.0;
 const ENEMY_PLAN_STEP_DT: f32 = 0.25;
 
@@ -35,7 +35,7 @@ impl Default for ComputedTrajectory {
             computed_at: 0.0,
             step_dt: 0.0,
             path: vec![],
-            closest_flyby: 0.0,
+            closest_flyby: f32::INFINITY,
         }
     }
 }
