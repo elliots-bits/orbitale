@@ -7,6 +7,7 @@ mod collisions_handler;
 mod course_planner;
 mod death;
 mod despawn_queue;
+mod frame_pace;
 mod gravity;
 mod healthpoints;
 mod impulses_aggregator;
@@ -75,6 +76,7 @@ fn main() {
     despawn_queue::setup(&mut app);
     system_sets::setup(&mut app);
     ui::setup(&mut app);
+    frame_pace::setup(&mut app);
 
     app.insert_resource(RapierConfiguration {
         gravity: Vec2::ZERO,
