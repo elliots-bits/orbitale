@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 mod death_screen;
+mod entities_count;
 mod healthbar;
 mod menu;
 mod radar;
@@ -15,4 +16,5 @@ pub fn setup(app: &mut App) {
     death_screen::setup(app);
     radar::setup(app);
     healthbar::setup(app);
+    entities_count::setup(app);
 }
