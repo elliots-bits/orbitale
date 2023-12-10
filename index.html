@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+
+<body style="margin: 0px;">
+    <script type="module">
+        import main from './space_chase.js'
+
+        main().catch((error) => {
+            if (!error.message.startsWith("Using exceptions for control flow, don't mind me. This isn't actually an error!")) {
+                throw error;
+            }
+        });
+    </script>
+</body>
+
+</html>
