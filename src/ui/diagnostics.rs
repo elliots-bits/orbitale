@@ -1,6 +1,8 @@
-use bevy::prelude::*;
+use bevy::{diagnostic::DiagnosticsStore, prelude::*};
 
 use crate::{alien_ship::AlienShipMarker, AppState};
+
+use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 
 #[derive(Component)]
 struct EntitiesCountText;
@@ -12,6 +14,8 @@ pub fn setup(app: &mut App) {
         Update,
         update_entities_count.run_if(in_state(AppState::Game)),
     );
+
+    app.add_plugins(FrameTimeDiagnosticsPlugin::default());
 }
 
 fn setup_entities_count(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -26,7 +30,15 @@ fn setup_entities_count(mut commands: Commands, asset_server: Res<AssetServer>) 
                 },
             ),
             TextSection::new(
-                "Total entities: 0",
+                "Total entities: 0\n",
+                TextStyle {
+                    font: asset_server.load("fusion-pixel-12px-proportional-latin.ttf"),
+                    font_size: 20.0,
+                    color: Color::rgb(0.9, 0.9, 0.9),
+                },
+            ),
+            TextSection::new(
+                "FPS: N\\A",
                 TextStyle {
                     font: asset_server.load("fusion-pixel-12px-proportional-latin.ttf"),
                     font_size: 20.0,
@@ -54,9 +66,16 @@ fn update_entities_count(
     mut text_query: Query<&mut Text, With<EntitiesCountText>>,
     enemies_query: Query<Entity, With<AlienShipMarker>>,
     entities_query: Query<Entity>,
+    diagnostics: Res<DiagnosticsStore>,
 ) {
     if let Ok(mut text) = text_query.get_single_mut() {
         text.sections[0].value = format!("Enemies: {}\n", enemies_query.iter().count());
-        text.sections[1].value = format!("Total entities: {}", entities_query.iter().count());
+        text.sections[1].value = format!("Total entities: {}\n", entities_query.iter().count());
+        if let Some(fps) = diagnostics
+            .get(FrameTimeDiagnosticsPlugin::FPS)
+            .and_then(|fps| fps.smoothed())
+        {
+            text.sections[2].value = format!("FPS: {:.0}", fps);
+        }
     }
 }
