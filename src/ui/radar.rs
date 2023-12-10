@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy::{prelude::*, render::view::RenderLayers, window::PrimaryWindow};
+use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::{dynamics::Velocity, geometry::Collider};
 use bevy_vector_shapes::{
     painter::ShapePainter,
@@ -13,7 +13,6 @@ use crate::{
     camera::{GameCameraMarker, UI_LAYER},
     celestial_body::CelestialBodyMarker,
     course_planner::{ComputedTrajectory, PLAYER_PLAN_DURATION, PLAYER_PLAN_STEP_DT},
-    healthpoints::HealthPoints,
     player::PlayerMarker,
     system_sets::AppStage,
     AppState,

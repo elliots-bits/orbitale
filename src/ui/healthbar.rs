@@ -1,21 +1,8 @@
-use std::f32::consts::PI;
-
 use bevy::{prelude::*, render::view::RenderLayers, window::PrimaryWindow};
-use bevy_rapier2d::{dynamics::Velocity, geometry::Collider};
-use bevy_vector_shapes::{
-    painter::ShapePainter,
-    shapes::{Cap, DiscPainter, LinePainter, RectPainter},
-};
-use colorgrad::CustomGradient;
 
-use crate::{
-    alien_ship::AlienShipMarker,
-    camera::{GameCameraMarker, UI_LAYER},
-    celestial_body::CelestialBodyMarker,
-    course_planner::{ComputedTrajectory, PLAYER_PLAN_DURATION, PLAYER_PLAN_STEP_DT},
-    healthpoints::HealthPoints,
-    player::PlayerMarker,
-};
+use bevy_vector_shapes::{painter::ShapePainter, shapes::RectPainter};
+
+use crate::{camera::UI_LAYER, healthpoints::HealthPoints, player::PlayerMarker};
 
 const BAR_SIZE: Vec2 = Vec2 { x: 300.0, y: 25.0 };
 
