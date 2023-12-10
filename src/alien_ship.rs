@@ -8,6 +8,7 @@ use crate::{
         orientation_controller::OrientationController, position_controller::PositionController,
         AIControllerQueues,
     },
+    camera::GameCameraMarker,
     impulses_aggregator::AddExternalImpulse,
     lasers::{self, Laser, LaserAbility, LaserOrigin},
     particles::thrusters::spawn_rotation_thruster_cone,
@@ -63,84 +64,97 @@ pub fn update(
         ),
         With<AlienShipMarker>,
     >,
+    camera: Query<(&Transform, &OrthographicProjection), With<GameCameraMarker>>,
 ) {
     // The actual AI is going to be a bit tricky.
     // We'll at least have to implement a basic PID control loop.
 
     // For now, it is very dumb. It aims at the player and accelerates if it points in kinda in the player direction.
-    if let Ok(player_t) = player.get_single() {
-        for (
-            entity,
-            t,
-            v,
-            orientation_controller,
-            position_controller,
-            mut laser_ability,
-            mut thruster,
-        ) in query.iter_mut()
-        {
-            let mut angular_impulse = 0.0;
-
-            let local_forward = t.up().xy();
-            let d = (player_t.translation - t.translation).xy();
-            let orientation_to_player = local_forward.angle_between(d);
-            if ENABLE_SHOOTING
-                && d.length() < MAX_SHOOT_DISTANCE
-                && orientation_to_player.abs() < MAX_SHOOT_THETA
-                && laser_ability.ready(&time)
-            {
-                lasers::spawn(
-                    &mut commands,
-                    t.translation.xy()
-                        + v.linvel * time.delta_seconds()
-                        + t.up().xy().normalize() * 60.0,
-                    local_forward.rotate(Vec2 { x: 1500.0, y: 0.0 }) + v.linvel,
-                    Laser {
-                        origin: LaserOrigin::Enemy,
-                        damage: 10.0,
-                        shot_at: time.elapsed_seconds(),
-                    },
-                );
-                laser_ability.last_shot = Some(time.elapsed_seconds());
-            }
-
-            let mut request_dynamics_controllers_update = false;
-            let (cmd_torque, cmd_end_time) = orientation_controller.current_command;
-            if time.elapsed_seconds() < cmd_end_time && cmd_torque.abs() > 0.01 {
-                angular_impulse += cmd_torque;
-                let particle_distance = 24.0;
-                let xy = t.translation.xy();
-                spawn_rotation_thruster_cone(
-                    &mut commands,
-                    settings.entities_quantity,
-                    &time,
-                    xy + t.right().xy().normalize() * particle_distance * cmd_torque.signum(),
-                    v.linvel,
-                    t.down().xy().normalize() * cmd_torque.signum(),
-                );
-            } else {
-                request_dynamics_controllers_update = true;
-            }
-
-            let (cmd_thrust, cmd_end_time) = position_controller.current_command;
-            if time.elapsed_seconds() < cmd_end_time && cmd_thrust.abs() > 0.01 {
-                thruster.throttle(time.delta_seconds());
-            } else {
-                thruster.release(time.delta_seconds());
-                request_dynamics_controllers_update = true;
-            }
-
-            if request_dynamics_controllers_update {
-                orientation_controller_queue.controllers.push_back(entity);
-            }
-            impulses.send(AddExternalImpulse {
+    if let Ok((cam_transform, cam_proj)) = camera.get_single() {
+        let cam_pos = cam_transform.translation.xy();
+        let cam_area = cam_proj.area;
+        let abs_cam_area = Rect {
+            min: cam_area.min + cam_pos,
+            max: cam_area.max + cam_pos,
+        };
+        if let Ok(player_t) = player.get_single() {
+            for (
                 entity,
-                impulse: Vec2::ZERO,
-                torque_impulse: angular_impulse,
-            });
+                t,
+                v,
+                orientation_controller,
+                position_controller,
+                mut laser_ability,
+                mut thruster,
+            ) in query.iter_mut()
+            {
+                let mut angular_impulse = 0.0;
+
+                let local_forward = t.up().xy();
+                let d = (player_t.translation - t.translation).xy();
+                let orientation_to_player = local_forward.angle_between(d);
+                if ENABLE_SHOOTING
+                    && d.length() < MAX_SHOOT_DISTANCE
+                    && orientation_to_player.abs() < MAX_SHOOT_THETA
+                    && laser_ability.ready(&time)
+                {
+                    lasers::spawn(
+                        &mut commands,
+                        t.translation.xy()
+                            + v.linvel * time.delta_seconds()
+                            + t.up().xy().normalize() * 60.0,
+                        local_forward.rotate(Vec2 { x: 1500.0, y: 0.0 }) + v.linvel,
+                        Laser {
+                            origin: LaserOrigin::Enemy,
+                            damage: 10.0,
+                            shot_at: time.elapsed_seconds(),
+                        },
+                    );
+                    laser_ability.last_shot = Some(time.elapsed_seconds());
+                }
+
+                let mut request_dynamics_controllers_update = false;
+                let (cmd_torque, cmd_end_time) = orientation_controller.current_command;
+                if time.elapsed_seconds() < cmd_end_time && cmd_torque.abs() > 0.01 {
+                    angular_impulse += cmd_torque;
+                    let particle_distance = 24.0;
+                    let xy = t.translation.xy();
+                    if abs_cam_area.contains(xy) {
+                        spawn_rotation_thruster_cone(
+                            &mut commands,
+                            settings.entities_quantity,
+                            &time,
+                            xy + t.right().xy().normalize()
+                                * particle_distance
+                                * cmd_torque.signum(),
+                            v.linvel,
+                            t.down().xy().normalize() * cmd_torque.signum(),
+                        );
+                    }
+                } else {
+                    request_dynamics_controllers_update = true;
+                }
+
+                let (cmd_thrust, cmd_end_time) = position_controller.current_command;
+                if time.elapsed_seconds() < cmd_end_time && cmd_thrust.abs() > 0.01 {
+                    thruster.throttle(time.delta_seconds());
+                } else {
+                    thruster.release(time.delta_seconds());
+                    request_dynamics_controllers_update = true;
+                }
+
+                if request_dynamics_controllers_update {
+                    orientation_controller_queue.controllers.push_back(entity);
+                }
+                impulses.send(AddExternalImpulse {
+                    entity,
+                    impulse: Vec2::ZERO,
+                    torque_impulse: angular_impulse,
+                });
+            }
+        } else {
+            error!("Can't process Alien Ships: player not found");
         }
-    } else {
-        error!("Can't process Alien Ships: player not found");
     }
 }
 
