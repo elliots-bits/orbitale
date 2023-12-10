@@ -13,6 +13,7 @@ use crate::{
     particles::thrusters::spawn_rotation_thruster_cone,
     player::PlayerMarker,
     thruster::Thruster,
+    ui::GameSettings,
 };
 
 pub const ALIEN_SHIP_DRIVE_ENGINE_IMPULSE: f32 = 4.0;
@@ -45,6 +46,7 @@ pub struct AlienShipMarker;
 
 pub fn update(
     mut commands: Commands,
+    settings: Res<GameSettings>,
     mut orientation_controller_queue: ResMut<AIControllerQueues>,
     time: Res<Time>,
     mut impulses: EventWriter<AddExternalImpulse>,
@@ -110,6 +112,7 @@ pub fn update(
                 let xy = t.translation.xy();
                 spawn_rotation_thruster_cone(
                     &mut commands,
+                    settings.entities_quantity,
                     &time,
                     xy + t.right().xy().normalize() * particle_distance * cmd_torque.signum(),
                     v.linvel,

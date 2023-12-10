@@ -13,6 +13,7 @@ use crate::{
     lasers::{self, Laser, LaserAbility, LaserOrigin},
     particles::thrusters::spawn_rotation_thruster_cone,
     thruster::Thruster,
+    ui::GameSettings,
 };
 
 const PLAYER_MASS: f32 = 4.0;
@@ -29,6 +30,7 @@ pub struct PlayerMarker;
 
 pub fn control(
     mut commands: Commands,
+    settings: Res<GameSettings>,
     time: Res<Time>,
     mut impulses: EventWriter<AddExternalImpulse>,
     mut player: Query<
@@ -59,6 +61,7 @@ pub fn control(
             angular_impulse -= ROTATION_IMPULSE;
             spawn_rotation_thruster_cone(
                 &mut commands,
+                settings.entities_quantity,
                 &time,
                 xy + transform.right().xy().normalize() * particle_distance,
                 velocity.linvel,
@@ -66,6 +69,7 @@ pub fn control(
             );
             spawn_rotation_thruster_cone(
                 &mut commands,
+                settings.entities_quantity,
                 &time,
                 xy + transform.left().xy().normalize() * particle_distance,
                 velocity.linvel,
@@ -75,6 +79,7 @@ pub fn control(
             angular_impulse += ROTATION_IMPULSE;
             spawn_rotation_thruster_cone(
                 &mut commands,
+                settings.entities_quantity,
                 &time,
                 xy + transform.right().xy().normalize() * particle_distance,
                 velocity.linvel,
@@ -82,6 +87,7 @@ pub fn control(
             );
             spawn_rotation_thruster_cone(
                 &mut commands,
+                settings.entities_quantity,
                 &time,
                 xy + transform.left().xy().normalize() * particle_distance,
                 velocity.linvel,
