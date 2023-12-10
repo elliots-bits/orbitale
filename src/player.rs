@@ -130,8 +130,8 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         Thruster {
             max_thrust: DRIVE_ENGINE_MAX_IMPULSE,
             current_thrust: 0.0,
-            rampup_rate: 1.8,
-            shutoff_rate: 7.0,
+            rampup_rate: 10.0,
+            shutoff_rate: DRIVE_ENGINE_MAX_IMPULSE * 2.0,
             ignition_thrust: DRIVE_ENGINE_INIT_IMPULSE,
         },
         LaserAbility {
