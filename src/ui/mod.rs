@@ -7,7 +7,7 @@ mod menu;
 mod radar;
 mod score;
 
-pub use menu::{Difficulty, GameSettings};
+pub use menu::{Difficulty, EntitiesQuantity, GameSettings};
 pub use score::Score;
 
 pub fn setup(app: &mut App) {
