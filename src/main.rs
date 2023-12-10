@@ -6,16 +6,13 @@ mod celestial_body;
 mod collisions_handler;
 mod course_planner;
 mod death;
-mod death_screen;
 mod despawn_queue;
 mod gravity;
 mod healthpoints;
 mod impulses_aggregator;
 mod lasers;
-mod menu;
 mod particles;
 mod player;
-mod score;
 mod system_sets;
 mod thruster;
 mod ui;
@@ -77,9 +74,7 @@ fn main() {
     impulses_aggregator::setup(&mut app);
     despawn_queue::setup(&mut app);
     system_sets::setup(&mut app);
-    menu::setup(&mut app);
-    score::setup(&mut app);
-    death_screen::setup(&mut app);
+    ui::setup(&mut app);
 
     app.insert_resource(RapierConfiguration {
         gravity: Vec2::ZERO,
@@ -103,7 +98,6 @@ fn main() {
     app.add_systems(
         OnEnter(AppState::Game),
         (
-            ui::setup,
             player::setup,
             alien_waves::setup,
             celestial_body::setup,
@@ -153,12 +147,7 @@ fn main() {
     );
     app.add_systems(
         Update,
-        (
-            lasers::draw,
-            ui::draw_healthbar,
-            ui::draw_hud,
-            particles::draw,
-        )
+        (lasers::draw, particles::draw)
             .in_set(AppStage::Draw)
             .run_if(in_state(AppState::Game)),
     );

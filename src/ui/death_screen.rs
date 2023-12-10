@@ -1,10 +1,11 @@
 use bevy::{prelude::*, utils::Instant};
 
-use crate::{
+use crate::ui::{
     menu::GameSettings,
     score::{compute_score, score_multiplier, Score},
-    AppState,
 };
+
+use crate::AppState;
 
 const PRIMARY_COLOR: Color = Color::rgb(0.95, 0.95, 0.95);
 

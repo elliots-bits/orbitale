@@ -1,9 +1,7 @@
-
-
 use bevy::{prelude::*, utils::Instant};
 
 use crate::{
-    menu::{Difficulty, GameSettings},
+    ui::{Difficulty, GameSettings},
     AppState,
 };
 

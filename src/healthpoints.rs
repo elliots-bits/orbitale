@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::menu::Difficulty;
+use crate::ui::Difficulty;
 
 #[derive(Component)]
 pub struct HealthPoints {

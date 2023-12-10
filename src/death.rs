@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     alien_ship::AlienShipMarker, despawn_queue::DespawnQueue, healthpoints::HealthPoints,
-    player::PlayerMarker, score::Score, AppState,
+    player::PlayerMarker, ui::Score, AppState,
 };
 
 pub fn update(

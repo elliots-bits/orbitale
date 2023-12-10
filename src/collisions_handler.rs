@@ -11,9 +11,9 @@ use crate::{
     healthpoints::HealthPoints,
     impulses_aggregator::AddExternalImpulse,
     lasers::{Laser, LaserOrigin},
-    menu::{Difficulty, GameSettings},
     player::PlayerMarker,
     thruster::Thruster,
+    ui::{Difficulty, GameSettings},
 };
 
 pub fn update(
