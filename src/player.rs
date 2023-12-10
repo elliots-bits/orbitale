@@ -14,6 +14,7 @@ use crate::{
     particles::thrusters::spawn_rotation_thruster_cone,
     thruster::Thruster,
     ui::GameSettings,
+    GLOBAL_IMPULSE_DURATION_MULT,
 };
 
 const PLAYER_MASS: f32 = 4.0;
@@ -114,7 +115,7 @@ pub fn control(
         impulses.send(AddExternalImpulse {
             entity,
             impulse: Vec2::ZERO,
-            torque_impulse: angular_impulse,
+            torque_impulse: angular_impulse * time.delta_seconds() * GLOBAL_IMPULSE_DURATION_MULT,
         });
     }
 }

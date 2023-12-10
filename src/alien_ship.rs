@@ -15,6 +15,7 @@ use crate::{
     player::PlayerMarker,
     thruster::Thruster,
     ui::GameSettings,
+    GLOBAL_IMPULSE_DURATION_MULT,
 };
 
 pub const ALIEN_SHIP_DRIVE_ENGINE_IMPULSE: f32 = 4.0;
@@ -131,14 +132,14 @@ pub fn update(
                             t.down().xy().normalize() * cmd_torque.signum(),
                         );
                     }
-                } else {
+                } else if time.elapsed_seconds() > cmd_end_time {
                     request_dynamics_controllers_update = true;
                 }
 
                 let (cmd_thrust, cmd_end_time) = position_controller.current_command;
                 if time.elapsed_seconds() < cmd_end_time && cmd_thrust.abs() > 0.01 {
                     thruster.throttle(time.delta_seconds());
-                } else {
+                } else if time.elapsed_seconds() > cmd_end_time {
                     thruster.release(time.delta_seconds());
                     request_dynamics_controllers_update = true;
                 }
@@ -149,7 +150,9 @@ pub fn update(
                 impulses.send(AddExternalImpulse {
                     entity,
                     impulse: Vec2::ZERO,
-                    torque_impulse: angular_impulse,
+                    torque_impulse: angular_impulse
+                        * time.delta_seconds()
+                        * GLOBAL_IMPULSE_DURATION_MULT,
                 });
             }
         } else {

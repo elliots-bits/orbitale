@@ -15,8 +15,8 @@ use self::{
     orientation_controller::OrientationController, position_controller::PositionController,
 };
 
-const MAX_AI_STATE_UPDATES_PER_FRAME: u32 = 100;
-const MAX_DYNAMICS_CONTROLLERS_UPDATES_PER_FRAME: u32 = 25;
+const MAX_AI_STATE_UPDATES_PER_FRAME: u32 = 1000;
+const MAX_DYNAMICS_CONTROLLERS_UPDATES_PER_FRAME: u32 = 250;
 const MIN_DELTA_V: f32 = 50.0;
 const MATCH_DELTA_V_THRESHOLD: f32 = 5000.0;
 const AGGRO_RANGE: f32 = 1250.0;
@@ -188,7 +188,7 @@ pub fn update_ai_controllers(
                             let escape_orientation = escape_vector.y.atan2(escape_vector.x);
                             o_controller.target(escape_orientation);
                             o_controller.update_command(&time, current_orientation, v.angvel);
-                            if o_controller.at_target(current_orientation, PI / 2.0) {
+                            if o_controller.at_target(current_orientation, PI / 4.0) {
                                 p_controller.accelerate(&time, 1.0);
                             }
                         }

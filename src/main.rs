@@ -29,6 +29,8 @@ use bevy_rapier2d::plugin::{NoUserData, RapierConfiguration, RapierPhysicsPlugin
 use bevy_vector_shapes::Shape2dPlugin;
 use system_sets::AppStage;
 
+pub const GLOBAL_IMPULSE_DURATION_MULT: f32 = 200.0;
+
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 pub enum AppState {
     Game,

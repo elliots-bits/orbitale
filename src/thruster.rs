@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::impulses_aggregator::AddExternalImpulse;
+use crate::{impulses_aggregator::AddExternalImpulse, GLOBAL_IMPULSE_DURATION_MULT};
 
 #[derive(Component)]
 pub struct Thruster {
@@ -26,6 +26,7 @@ impl Thruster {
 }
 
 pub fn update(
+    time: Res<Time>,
     mut impulses: EventWriter<AddExternalImpulse>,
     thrustables: Query<(Entity, &Transform, &Thruster)>,
 ) {
@@ -33,7 +34,9 @@ pub fn update(
         let impulse = transform
             .up()
             .xy()
-            .rotate(Vec2::new(thruster.current_thrust, 0.0));
+            .rotate(Vec2::new(thruster.current_thrust, 0.0))
+            * time.delta_seconds()
+            * GLOBAL_IMPULSE_DURATION_MULT;
         // debug!("Engine thrust: {}", thruster.current_thrust);
         impulses.send(AddExternalImpulse {
             entity,
