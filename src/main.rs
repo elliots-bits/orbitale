@@ -22,7 +22,7 @@ use bevy::{
     a11y::AccessibilityPlugin, asset::AssetMetaCheck, audio::AudioPlugin,
     core_pipeline::CorePipelinePlugin, diagnostic::DiagnosticsPlugin, input::InputPlugin,
     log::LogPlugin, prelude::*, render::RenderPlugin, scene::ScenePlugin, sprite::SpritePlugin,
-    text::TextPlugin, time::TimePlugin, ui::UiPlugin, winit::WinitPlugin,
+    text::TextPlugin, time::TimePlugin, ui::UiPlugin, window::WindowMode, winit::WinitPlugin,
 };
 use bevy_parallax::ParallaxPlugin;
 use bevy_rapier2d::plugin::{NoUserData, RapierConfiguration, RapierPhysicsPlugin, TimestepMode};
@@ -57,7 +57,23 @@ fn main() {
     app.add_plugins(HierarchyPlugin);
     app.add_plugins(DiagnosticsPlugin);
     app.add_plugins(InputPlugin);
-    app.add_plugins(WindowPlugin::default());
+    app.add_plugins(WindowPlugin {
+        primary_window: Some(Window {
+            fit_canvas_to_parent: true,
+            // mode: WindowMode::SizedFullscreen,
+            // resolution: (3840., 2160.).into(),
+            // decorations: true,
+            // // Tells wasm not to override default event handling, like F5, Ctrl+R etc.
+            prevent_default_event_handling: false,
+
+            canvas: match cfg!(debug_assertions) {
+                false => Some("#bevy".to_string()),
+                true => None,
+            },
+            ..Default::default()
+        }),
+        ..Default::default()
+    });
     app.add_plugins(AccessibilityPlugin);
     app.add_plugins(AssetPlugin::default());
     app.add_plugins(ScenePlugin);
