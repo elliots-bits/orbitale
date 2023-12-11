@@ -196,7 +196,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         commands.spawn(gen_body_bundle(
             binary_a,
             0.5,
-            asset_server.load("planet_small_2.png"),
+            asset_server.load("planet_blue_shiny_rock.png"),
             sprite_radius,
             3e6,
         ));
