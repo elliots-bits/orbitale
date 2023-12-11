@@ -20,7 +20,7 @@ use crate::{
     GLOBAL_IMPULSE_DURATION_MULT,
 };
 
-const PLAYER_MASS: f32 = 4.0;
+pub const PLAYER_MASS: f32 = 4.0;
 const DRIVE_ENGINE_MAX_IMPULSE: f32 = 8.0 * PLAYER_MASS;
 const DRIVE_ENGINE_INIT_IMPULSE: f32 = 3.0 * PLAYER_MASS;
 const ROTATION_IMPULSE: f32 = 14.0 * DRIVE_ENGINE_MAX_IMPULSE;
@@ -108,7 +108,7 @@ pub fn control(
                 Vec2 { x: 3000.0, y: 0.0 }.rotate(local_forward) + velocity.linvel,
                 Laser {
                     origin: LaserOrigin::Player,
-                    damage: 100.0,
+                    damage: 1000.0,
                     shot_at: time.elapsed_seconds(),
                 },
             );

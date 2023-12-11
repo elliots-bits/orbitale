@@ -112,8 +112,8 @@ pub fn update(
                 let mut cmd: bevy::ecs::system::EntityCommands<'_, '_, '_> = commands.spawn((
                     AlienShipMarker,
                     HealthPoints {
-                        max: 10.0,
-                        current: 10.0,
+                        max: 50.0,
+                        current: 50.0,
                     },
                     Thruster {
                         max_thrust: ALIEN_SHIP_DRIVE_ENGINE_IMPULSE * difficulty_engine_multiplier,
