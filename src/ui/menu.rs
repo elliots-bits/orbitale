@@ -25,7 +25,7 @@ pub enum Difficulty {
 }
 
 impl Difficulty {
-    fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> &'static str {
         match self {
             Difficulty::GodMode => "God Mode",
             Difficulty::Easy => "Easy",
@@ -49,7 +49,7 @@ impl EntitiesQuantity {
         match self {
             EntitiesQuantity::Some => "    Some", // what ? weird spaces ? yes I'm a professional why do you ask ?
             EntitiesQuantity::ALot => "a LOT !",
-            EntitiesQuantity::TooMuch => "Too Much",
+            EntitiesQuantity::TooMuch => "Too Many",
         }
     }
 }

@@ -109,7 +109,12 @@ fn setup_death_screen(
 
     let score_multiplier = commands
         .spawn(TextBundle::from_section(
-            format!("Difficulty multiplier : x{}", score_multiplier(&settings)),
+            format!(
+                "Difficulty multiplier : x{} ( {}, {} )",
+                score_multiplier(&settings),
+                settings.difficulty.as_str(),
+                entities_quantity_label(&settings),
+            ),
             TextStyle {
                 font_size: 30.0,
                 font: asset_server.load("fusion-pixel-12px-proportional-latin.ttf"),
@@ -304,6 +309,14 @@ fn update_death_screen(
                 background_color.0 = Color::NONE.into();
             }
         }
+    }
+}
+
+fn entities_quantity_label(settings: &GameSettings) -> &'static str {
+    match settings.entities_quantity {
+        super::EntitiesQuantity::Some => "Few entities",
+        super::EntitiesQuantity::ALot => "Many entities",
+        super::EntitiesQuantity::TooMuch => "Too many entities",
     }
 }
 
