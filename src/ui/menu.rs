@@ -60,6 +60,9 @@ const SECONDARY_COLOR: Color = Color::rgb(0.30, 0.30, 0.30);
 #[derive(Component)]
 pub struct PlayButton;
 
+#[derive(Component)]
+pub struct CreditsButton;
+
 pub fn setup(app: &mut App) {
     app.insert_resource(GameSettings::default());
 
@@ -79,7 +82,7 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn((Camera2dBundle::default(), MenuCameraMarker));
 
-    let menu = commands
+    let menu: Entity = commands
         .spawn((
             NodeBundle {
                 style: Style {
@@ -148,7 +151,6 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 font_size: 40.0,
                 font: asset_server.load("fusion-pixel-12px-proportional-latin.ttf"),
                 color: PRIMARY_COLOR,
-                ..default()
             },
         ))
         .id();
@@ -297,7 +299,7 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     padding: UiRect {
                         left: Val::Px(20.),
                         right: Val::Px(20.),
-                        top: Val::Px(0.),
+                        top: Val::Px(0.0),
                         bottom: Val::Px(7.),
                     },
                     border: UiRect {
@@ -307,6 +309,12 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                         bottom: Val::Px(2.),
                     },
                     top: Val::Px(5.0),
+                    margin: UiRect {
+                        left: Val::Px(0.),
+                        right: Val::Px(0.),
+                        top: Val::Px(0.),
+                        bottom: Val::Px(60.),
+                    },
                     ..default()
                 },
                 background_color: Color::NONE.into(),
@@ -327,15 +335,88 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
             ));
         })
         .id();
-
     commands.entity(menu).add_child(play_button);
+
+    let artists = commands
+        .spawn(TextBundle::from_section(
+            "Created by Elliot Bitsch & Eliott Gaboreau",
+            TextStyle {
+                font_size: 24.0,
+                font: asset_server.load("fusion-pixel-12px-proportional-latin.ttf"),
+                color: PRIMARY_COLOR,
+            },
+        ))
+        .id();
+    commands.entity(menu).add_child(artists);
+
+    let credits_button = commands
+        .spawn((
+            ButtonBundle {
+                style: Style {
+                    // horizontally center child text
+                    justify_content: JustifyContent::Center,
+                    // vertically center child text
+                    align_items: AlignItems::Center,
+                    padding: UiRect {
+                        left: Val::Px(20.),
+                        right: Val::Px(20.),
+                        top: Val::Px(0.0),
+                        bottom: Val::Px(7.),
+                    },
+                    border: UiRect {
+                        left: Val::Px(2.),
+                        right: Val::Px(2.),
+                        top: Val::Px(2.),
+                        bottom: Val::Px(2.),
+                    },
+                    top: Val::Px(5.0),
+                    margin: UiRect {
+                        left: Val::Px(0.),
+                        right: Val::Px(0.),
+                        top: Val::Px(16.),
+                        bottom: Val::Px(0.),
+                    },
+                    ..default()
+                },
+                background_color: Color::NONE.into(),
+                border_color: PRIMARY_COLOR.into(),
+                ..default()
+            },
+            CreditsButton,
+        ))
+        .with_children(|parent| {
+            parent.spawn(TextBundle::from_section(
+                "Credits",
+                TextStyle {
+                    font_size: 30.0,
+                    color: PRIMARY_COLOR,
+                    font: asset_server.load("fusion-pixel-12px-proportional-latin.ttf"),
+                },
+            ));
+        })
+        .id();
+    commands.entity(menu).add_child(credits_button);
 }
 
 fn update_menu(
     mut next_state: ResMut<NextState<AppState>>,
     mut play_button_interraction: Query<
         (&Interaction, &Children, &mut BackgroundColor),
-        (Changed<Interaction>, With<Button>, With<PlayButton>),
+        (
+            Changed<Interaction>,
+            With<Button>,
+            With<PlayButton>,
+            Without<CreditsButton>,
+        ),
+    >,
+    mut credits_button_interraction: Query<
+        (&Interaction, &Children, &mut BackgroundColor),
+        (
+            Changed<Interaction>,
+            With<Button>,
+            With<CreditsButton>,
+            Without<PlayButton>,
+        ),
     >,
     mut difficulty_button_interraction: Query<
         (&Interaction, &Difficulty),
@@ -394,6 +475,23 @@ fn update_menu(
         match *interaction {
             Interaction::Pressed => {
                 next_state.set(AppState::Game);
+            }
+            Interaction::Hovered => {
+                text.sections[0].style.color = Color::BLACK.into();
+                background_color.0 = PRIMARY_COLOR.into();
+            }
+            Interaction::None => {
+                text.sections[0].style.color = PRIMARY_COLOR.into();
+                background_color.0 = Color::NONE.into();
+            }
+        }
+    }
+    for (interaction, children, mut background_color) in &mut credits_button_interraction {
+        let mut text = text_query.get_mut(children[0]).unwrap();
+
+        match *interaction {
+            Interaction::Pressed => {
+                next_state.set(AppState::Credits);
             }
             Interaction::Hovered => {
                 text.sections[0].style.color = Color::BLACK.into();

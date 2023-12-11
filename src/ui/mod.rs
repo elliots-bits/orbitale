@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+mod credits_screen;
 mod death_screen;
 mod diagnostics;
 mod healthbar;
@@ -14,6 +15,7 @@ pub fn setup(app: &mut App) {
     menu::setup(app);
     score::setup(app);
     death_screen::setup(app);
+    credits_screen::setup(app);
     radar::setup(app);
     healthbar::setup(app);
     diagnostics::setup(app);

@@ -22,7 +22,7 @@ use bevy::{
     a11y::AccessibilityPlugin, asset::AssetMetaCheck, audio::AudioPlugin,
     core_pipeline::CorePipelinePlugin, diagnostic::DiagnosticsPlugin, input::InputPlugin,
     log::LogPlugin, prelude::*, render::RenderPlugin, scene::ScenePlugin, sprite::SpritePlugin,
-    text::TextPlugin, time::TimePlugin, ui::UiPlugin, window::WindowMode, winit::WinitPlugin,
+    text::TextPlugin, time::TimePlugin, ui::UiPlugin, winit::WinitPlugin,
 };
 use bevy_parallax::ParallaxPlugin;
 use bevy_rapier2d::plugin::{NoUserData, RapierConfiguration, RapierPhysicsPlugin, TimestepMode};
@@ -37,6 +37,7 @@ pub enum AppState {
     #[default]
     Menu,
     DeathScreen,
+    Credits,
 }
 
 fn main() {
