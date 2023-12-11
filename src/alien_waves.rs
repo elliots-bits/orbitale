@@ -83,7 +83,7 @@ pub fn update(
             let n_to_spawn = enemies_per_wave_count(&wave, &settings);
             debug!("Spawning {} alien ships", n_to_spawn);
 
-            let r = 5000.;
+            let r = 10000.;
             let theta = rng.sample(angle_side);
 
             let wave_center = Vec3::new(

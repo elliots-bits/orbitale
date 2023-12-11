@@ -16,7 +16,7 @@ use crate::{
     lasers::{self, Laser, LaserAbility, LaserOrigin},
     particles::thrusters::spawn_rotation_thruster_cone,
     thruster::Thruster,
-    ui::GameSettings,
+    ui::{Difficulty, GameSettings},
     GLOBAL_IMPULSE_DURATION_MULT,
 };
 
@@ -125,10 +125,15 @@ pub fn control(
 
 pub fn setup(
     mut commands: Commands,
+    settings: Res<GameSettings>,
     player: Query<&PlayerMarker>,
     asset_server: Res<AssetServer>,
     starter_planet: Query<(&StarterPlanetMarker, &CircularOrbitChain)>,
 ) {
+    let (impulse, rampup) = match settings.difficulty {
+        Difficulty::Impossible => (DRIVE_ENGINE_MAX_IMPULSE * 1.5, 40.0),
+        _ => (DRIVE_ENGINE_MAX_IMPULSE, 16.0),
+    };
     if player.is_empty() {
         debug!("Player setup");
         if let Ok((player_orbit, planet)) = starter_planet.get_single() {
@@ -144,10 +149,10 @@ pub fn setup(
                     current: STARTING_HP,
                 },
                 Thruster {
-                    max_thrust: DRIVE_ENGINE_MAX_IMPULSE,
+                    max_thrust: impulse,
                     current_thrust: 0.0,
-                    rampup_rate: 10.0,
-                    shutoff_rate: DRIVE_ENGINE_MAX_IMPULSE * 2.0,
+                    rampup_rate: rampup,
+                    shutoff_rate: impulse * 2.0,
                     ignition_thrust: DRIVE_ENGINE_INIT_IMPULSE,
                 },
                 LaserAbility {

@@ -21,7 +21,7 @@ pub fn update(
     mut collisions: EventReader<CollisionEvent>,
     mut player: Query<(Entity, &mut HealthPoints), (With<PlayerMarker>, Without<AlienShipMarker>)>,
     mut alien_ships: Query<&mut HealthPoints, (With<AlienShipMarker>, Without<PlayerMarker>)>,
-    lasers: Query<(Entity, &Laser)>,
+    mut lasers: Query<(Entity, &mut Laser)>,
     celestial_bodies: Query<Entity, With<CelestialBodyMarker>>,
     mut impulses: EventWriter<AddExternalImpulse>,
     player_movement_query: Query<(&AffectedByGravity, &Thruster, &Transform)>,
@@ -32,10 +32,10 @@ pub fn update(
             // debug!("Collision detected between {:?} and {:?}", a, b);
 
             // Check for an alien laser hitting the player
-            if let Some(((_, mut player_hp), (laser_entity, laser))) =
-                if let (Ok(p), Ok(l)) = (player.get_mut(a), lasers.get(b)) {
+            if let Some(((_, mut player_hp), (laser_entity, mut laser))) =
+                if let (Ok(p), Ok(l)) = (player.get_mut(a), lasers.get_mut(b)) {
                     Some((p, l))
-                } else if let (Ok(p), Ok(l)) = (player.get_mut(b), lasers.get(a)) {
+                } else if let (Ok(p), Ok(l)) = (player.get_mut(b), lasers.get_mut(a)) {
                     Some((p, l))
                 } else {
                     None
@@ -45,6 +45,7 @@ pub fn update(
                     // debug!("Player's been hit by enemy");
                     despawn_queue.1.insert(laser_entity);
                     player_hp.decrease(laser.damage, settings.difficulty);
+                    laser.damage = 0.0;
                 }
             }
 
