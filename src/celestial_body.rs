@@ -105,7 +105,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(gen_body_bundle(
         &parent_saturn,
         5.0,
-        asset_server.load("planet_big.png"),
+        asset_server.load("planet_big.webp"),
         sprite_radius,
         5e7,
     ));
@@ -117,7 +117,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(gen_body_bundle(
         &parent_massive_pink_hole,
         3.0,
-        asset_server.load("planet_pink_shiny_rock.png"),
+        asset_server.load("planet_pink_shiny_rock.webp"),
         sprite_radius,
         7e7,
     ));
@@ -130,7 +130,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(gen_body_bundle(
         &volcanic,
         5.0,
-        asset_server.load("planet_big_1.png"),
+        asset_server.load("planet_big_1.webp"),
         sprite_radius,
         5e7,
     ));
@@ -142,7 +142,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(gen_body_bundle(
         &parent_pink_rock,
         5.0,
-        asset_server.load("planet_pink_shiny_rock.png"),
+        asset_server.load("planet_pink_shiny_rock.webp"),
         sprite_radius,
         5e7,
     ));
@@ -156,7 +156,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         commands.spawn(gen_body_bundle(
             child_moon_node,
             1.5,
-            asset_server.load("planet_small_0.png"),
+            asset_server.load("planet_small_0.webp"),
             sprite_radius,
             1e7,
         ));
@@ -170,7 +170,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             gen_body_bundle(
                 child_child_moon_node,
                 0.5,
-                asset_server.load("planet_small_3.png"),
+                asset_server.load("planet_small_3.webp"),
                 sprite_radius,
                 4e6,
             ),
@@ -196,7 +196,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         commands.spawn(gen_body_bundle(
             binary_a,
             0.5,
-            asset_server.load("planet_blue_shiny_rock.png"),
+            asset_server.load("planet_blue_shiny_rock.webp"),
             sprite_radius,
             3e6,
         ));
@@ -210,7 +210,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         commands.spawn(gen_body_bundle(
             binary_b,
             0.5,
-            asset_server.load("planet_small_1.png"),
+            asset_server.load("planet_small_1.webp"),
             sprite_radius,
             3e6,
         ));

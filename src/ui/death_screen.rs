@@ -51,7 +51,7 @@ fn setup_death_screen(
                 background_color: Color::WHITE.into(),
                 ..default()
             },
-            UiImage::new(asset_server.load("nasa_milky_way.png")),
+            UiImage::new(asset_server.load("nasa_milky_way.webp")),
             DeathScreen {},
         ))
         .id();

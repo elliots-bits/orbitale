@@ -36,7 +36,7 @@ fn setup_credits_screen(mut commands: Commands, asset_server: Res<AssetServer>) 
                 background_color: Color::WHITE.into(),
                 ..default()
             },
-            UiImage::new(asset_server.load("nasa_milky_way.png")),
+            UiImage::new(asset_server.load("nasa_milky_way.webp")),
             CreditsScreen,
         ))
         .id();
