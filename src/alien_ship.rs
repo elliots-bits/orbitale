@@ -18,11 +18,11 @@ use crate::{
     GLOBAL_IMPULSE_DURATION_MULT,
 };
 
-pub const ALIEN_SHIP_DRIVE_ENGINE_IMPULSE: f32 = 4.0;
-pub const ALIEN_SHIP_ROTATION_IMPULSE: f32 = 8.0 * ALIEN_SHIP_DRIVE_ENGINE_IMPULSE;
+pub const ALIEN_SHIP_DRIVE_ENGINE_IMPULSE: f32 = 8.0;
+pub const ALIEN_SHIP_ROTATION_IMPULSE: f32 = 6.0 * ALIEN_SHIP_DRIVE_ENGINE_IMPULSE;
 pub const ALIEN_SHIP_MASS: f32 = 1.0;
 
-pub const ALIEN_SHIP_LASER_COOLDOWN_S: f32 = 1.0;
+pub const ALIEN_SHIP_LASER_COOLDOWN_S: f32 = 0.33;
 
 const MAX_SHOOT_THETA: f32 = PI / 16.0;
 
@@ -128,7 +128,7 @@ pub fn update(
                                 * particle_distance
                                 * cmd_torque.signum(),
                             v.linvel,
-                            t.down().xy().normalize() * cmd_torque.signum(),
+                            t.down().xy().normalize(),
                         );
                     }
                 } else if time.elapsed_seconds() > cmd_end_time {

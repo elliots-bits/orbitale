@@ -12,14 +12,15 @@ use crate::{
 };
 
 use self::{
-    orientation_controller::OrientationController, position_controller::PositionController,
+    orientation_controller::{OrientationController, MIN_ROTATION_THETA},
+    position_controller::PositionController,
 };
 
 const MAX_AI_STATE_UPDATES_PER_FRAME: u32 = 1000;
 const MAX_DYNAMICS_CONTROLLERS_UPDATES_PER_FRAME: u32 = 250;
-const MIN_DELTA_V: f32 = 10.0;
-const MATCH_DELTA_V_THRESHOLD: f32 = 20000.0;
-pub const AGGRO_RANGE: f32 = 1600.0;
+const MIN_DELTA_V: f32 = 50.0;
+const MATCH_DELTA_V_THRESHOLD: f32 = 5000.0;
+pub const AGGRO_RANGE: f32 = 1500.0;
 
 #[derive(Resource, Default)]
 pub struct AIControllerQueues {
@@ -132,16 +133,20 @@ pub fn update_ai_controllers(
                             // debug!("-------");
                             // debug!("d={}", d);
                             // debug!("dv={}", dv);
-                            let speed_dot = dv.length() * (-dv.normalize()).dot(d.normalize());
+                            let speed_dot =
+                                dv.length() * (-dv.normalize_or_zero()).dot(d.normalize_or_zero());
                             // debug!("speed_dot={}", speed_dot);
-                            let should_brake = p_controller.should_brake(d.length(), speed_dot);
+                            let should_brake = p_controller
+                                .should_brake((d.length() - AGGRO_RANGE / 2.0).max(0.0), speed_dot);
                             // debug!("should_brake={}", should_brake);
 
-                            if should_brake {
+                            if speed_dot > 0.25 && should_brake {
                                 // debug!("Braking");
                                 o_controller.target(dv.y.atan2(dv.x) + 2.0 * PI);
                                 o_controller.update_command(&time, current_orientation, v.angvel);
-                                if o_controller.at_target(current_orientation, PI / 12.0) {
+                                if o_controller
+                                    .at_target(current_orientation, MIN_ROTATION_THETA * 2.0)
+                                {
                                     p_controller.accelerate(&time, 0.05);
                                 }
                             } else {
@@ -160,7 +165,7 @@ pub fn update_ai_controllers(
                                 // debug!("aiming at: {}", orientation);
                                 o_controller.target(orientation);
                                 o_controller.update_command(&time, current_orientation, v.angvel);
-                                if o_controller.at_target(current_orientation, PI / 20.0)
+                                if o_controller.at_target(current_orientation, MIN_ROTATION_THETA)
                                     && drift.length() > MIN_DELTA_V
                                 {
                                     // debug!("accelerating");
@@ -175,15 +180,16 @@ pub fn update_ai_controllers(
                             let orientation = dv.y.atan2(dv.x);
                             o_controller.target(orientation);
                             o_controller.update_command(&time, current_orientation, v.angvel);
-                            if o_controller.at_target(current_orientation, PI / 24.0) {
+                            if o_controller.at_target(current_orientation, PI / 8.0) {
                                 let tts = p_controller.time_to_stop(dv.length());
                                 p_controller
                                     .accelerate(&time, (tts / 2.0 - 0.1).max(0.01).min(0.25));
                             }
                         }
                         AiState::AvoidCrash => {
-                            let escape_vector = (-grav.last_acceleration.normalize_or_zero()
-                                + v.linvel.normalize_or_zero())
+                            let escape_vector = (-Vec2::Y
+                                .rotate(grav.last_acceleration.normalize_or_zero())
+                                - v.linvel.normalize_or_zero())
                             .normalize_or_zero();
                             let escape_orientation = escape_vector.y.atan2(escape_vector.x);
                             o_controller.target(escape_orientation);

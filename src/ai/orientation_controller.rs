@@ -6,7 +6,7 @@ use crate::{alien_ship::ALIEN_SHIP_MASS, GLOBAL_IMPULSE_DURATION_MULT};
 
 const ANGULAR_INERTIA: f32 = 0.5 * ALIEN_SHIP_MASS * 32.0 * 32.0;
 const STABILIZE_ANGULAR_VELOCITY_THRESHOLD: f32 = 4.0 * 2.0 * PI;
-const MIN_ROTATION_THETA: f32 = PI / 24.0; // We're close enough.
+pub const MIN_ROTATION_THETA: f32 = PI / 16.0; // We're close enough.
 
 #[derive(Component)]
 pub struct OrientationController {
@@ -109,6 +109,7 @@ impl OrientationController {
         // debug!("target={}", self.rotation_target.unwrap());
 
         let shortest_arc = self.shortest_arc(current_orientation, self.rotation_target.unwrap());
+        let arc_torque_limit = shortest_arc.abs().min(1.0);
         if self.should_stabilize(angular_velocity) {
             // debug!("stabilizing");
             let torque = -angular_velocity.signum() * self.torque_available;
@@ -128,7 +129,7 @@ impl OrientationController {
                 let ttt_at_current_speed =
                     (self.rotation_target.unwrap() - current_orientation) / angular_velocity;
                 if ttt_at_current_speed < 0.0 {
-                    ttt_at_current_speed + 2.0 * PI / angular_velocity
+                    ttt_at_current_speed + 2.0 * PI / angular_velocity.abs()
                 } else {
                     ttt_at_current_speed
                 }
@@ -143,8 +144,8 @@ impl OrientationController {
                 (
                     self.torque_available * shortest_arc.signum(),
                     (2.1 * angular_velocity.abs() / self.torque_available)
-                        .max(0.1)
-                        .min(0.33),
+                        .max(0.05)
+                        .min(0.2),
                 )
             } else {
                 // debug!("Executing maneuver");
@@ -158,8 +159,8 @@ impl OrientationController {
                     //     self.torque_available * -angular_velocity.signum()
                     // );
                     (
-                        self.torque_available * -angular_velocity.signum(),
-                        (tts - 0.05).max(0.05),
+                        self.torque_available * arc_torque_limit * -angular_velocity.signum(),
+                        (tts - 0.05).max(0.01),
                     )
                 } else if ttt_at_current_speed > 0.5 {
                     // debug!(
@@ -167,12 +168,12 @@ impl OrientationController {
                     //     self.torque_available * angular_velocity.signum()
                     // );
                     (
-                        self.torque_available * angular_velocity.signum(),
-                        (tts - 0.02).max(0.02),
+                        self.torque_available * arc_torque_limit * angular_velocity.signum(),
+                        0.01,
                     )
                 } else {
                     // debug!("keep rotating..");
-                    (0.0, 0.1)
+                    (0.0, 0.05)
                 }
             }
         }

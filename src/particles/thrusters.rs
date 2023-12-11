@@ -29,7 +29,7 @@ pub fn spawn_rotation_thruster_cone(
     let (n_mul, life_mul) = match entities_quantity {
         EntitiesQuantity::Some => (8, 0.75),
         EntitiesQuantity::ALot => (12, 1.0),
-        EntitiesQuantity::TooMuch => (20, 1.5),
+        EntitiesQuantity::TooMuch => (12, 1.5),
     };
     let n = (rng.gen::<f32>().abs().min(1.0) * 10.0) as u32 + 1;
     for _ in 0..(n * n_mul) {
@@ -107,7 +107,7 @@ pub fn spawn_main_thruster_particles(
                 let (n_mul, life_mul) = match game_settings.entities_quantity {
                     EntitiesQuantity::Some => (20.0, 0.75),
                     EntitiesQuantity::ALot => (50.0, 1.0),
-                    EntitiesQuantity::TooMuch => (100.0, 1.4),
+                    EntitiesQuantity::TooMuch => (50.0, 1.4),
                 };
                 let n = (rng.gen::<f32>().abs()
                     * n_mul

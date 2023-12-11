@@ -40,7 +40,7 @@ impl PositionController {
         } else {
             let tts = self.time_to_stop(v0);
             // debug!("Time to stop: {}", tts);
-            tts + 2.0 >= d / v0
+            tts + 1.0 >= d / v0
         }
     }
 }

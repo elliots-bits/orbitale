@@ -5,7 +5,10 @@ use bevy_rapier2d::{
 };
 use bevy_vector_shapes::{painter::ShapePainter, shapes::RectPainter};
 
-use crate::{camera::game_layer, despawn_queue::DespawnQueue, player::PlayerMarker};
+use crate::{
+    camera::game_layer, despawn_queue::DespawnQueue, gravity::AffectedByGravity,
+    player::PlayerMarker,
+};
 
 pub const LASER_LIFETIME_S: f32 = 2.0;
 
@@ -85,6 +88,7 @@ pub fn spawn(commands: &mut Commands, position: Vec2, velocity: Vec2, props: Las
         Velocity::linear(velocity),
         ActiveEvents::COLLISION_EVENTS,
         Sensor,
+        AffectedByGravity::default(),
         game_layer(),
     ));
 }

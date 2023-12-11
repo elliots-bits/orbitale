@@ -14,10 +14,10 @@ use crate::{
 pub const PLAYER_PLAN_DURATION: f32 = 30.0;
 pub const PLAYER_PLAN_STEP_DT: f32 = 0.05;
 
-const MAX_ENEMY_TRAJECTORIES_COMPUTED_PER_FRAME: u32 = 20;
+const MAX_ENEMY_TRAJECTORIES_COMPUTED_PER_FRAME: u32 = 60;
 const STALE_TRAJECTORY_AGE: f32 = 5.0;
-const ENEMY_PLAN_DURATION: f32 = 15.0;
-const ENEMY_PLAN_STEP_DT: f32 = 0.25;
+const ENEMY_PLAN_DURATION: f32 = 10.0;
+const ENEMY_PLAN_STEP_DT: f32 = 0.5;
 
 #[derive(Component)]
 pub struct ComputedTrajectory {
