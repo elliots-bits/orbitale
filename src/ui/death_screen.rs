@@ -28,13 +28,14 @@ pub fn setup(app: &mut App) {
 }
 
 fn setup_death_screen(
+    time: Res<Time>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     score: Res<Score>,
-    settings: Res<GameSettings>,
+    mut settings: ResMut<GameSettings>,
 ) {
     commands.spawn(Camera2dBundle::default());
-
+    settings.time_of_death = time.elapsed_seconds();
     let death_screen = commands
         .spawn((
             NodeBundle {
@@ -306,8 +307,13 @@ fn update_death_screen(
     }
 }
 
-fn play_on_press_space(mut next_state: ResMut<NextState<AppState>>, keys: Res<Input<KeyCode>>) {
-    if keys.pressed(KeyCode::Space) {
+fn play_on_press_space(
+    time: Res<Time>,
+    settings: Res<GameSettings>,
+    mut next_state: ResMut<NextState<AppState>>,
+    keys: Res<Input<KeyCode>>,
+) {
+    if keys.pressed(KeyCode::Space) && time.elapsed_seconds() - settings.time_of_death > 3.0 {
         next_state.set(AppState::Game);
     }
 }

@@ -11,6 +11,7 @@ struct Menu;
 pub struct GameSettings {
     pub difficulty: Difficulty,
     pub entities_quantity: EntitiesQuantity,
+    pub time_of_death: f32,
 }
 
 #[derive(Component, Default, EnumIter, Clone, Copy, PartialEq)]

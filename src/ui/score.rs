@@ -63,7 +63,7 @@ fn cleanup_score_hud(mut commands: Commands, text_query: Query<Entity, With<Scor
     }
 }
 
-pub fn score_multiplier(settings: &Res<GameSettings>) -> i32 {
+pub fn score_multiplier(settings: &GameSettings) -> i32 {
     match settings.difficulty {
         Difficulty::Hard => 2,
         Difficulty::Impossible => 5,
@@ -71,7 +71,7 @@ pub fn score_multiplier(settings: &Res<GameSettings>) -> i32 {
     }
 }
 
-pub fn time_power(settings: &Res<GameSettings>) -> f32 {
+pub fn time_power(settings: &GameSettings) -> f32 {
     match settings.difficulty {
         Difficulty::Hard => 1.45,
         Difficulty::Impossible => 1.6,
@@ -79,7 +79,7 @@ pub fn time_power(settings: &Res<GameSettings>) -> f32 {
     }
 }
 
-pub fn compute_score(score: &Res<Score>, settings: &Res<GameSettings>) -> i32 {
+pub fn compute_score(score: &Score, settings: &GameSettings) -> i32 {
     let score_multiplier = score_multiplier(settings);
     let enemies_killed = (score.enemies_killed * 10) as i32;
     let game_duration = Instant::now()
