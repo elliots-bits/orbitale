@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::{
     dynamics::{Ccd, RigidBody, Velocity},
     geometry::{ActiveEvents, Collider, ColliderMassProperties, Sensor},
@@ -6,7 +6,9 @@ use bevy_rapier2d::{
 use bevy_vector_shapes::{painter::ShapePainter, shapes::RectPainter};
 
 use crate::{
-    camera::game_layer, despawn_queue::DespawnQueue, gravity::AffectedByGravity,
+    camera::{game_layer, GameCameraMarker, UI_LAYER},
+    despawn_queue::DespawnQueue,
+    gravity::AffectedByGravity,
     player::PlayerMarker,
 };
 
@@ -51,23 +53,32 @@ pub fn update(
 }
 
 pub fn draw(
-    player: Query<&Velocity, With<PlayerMarker>>,
+    time: Res<Time>,
+    player: Query<(&Transform, &Velocity), With<PlayerMarker>>,
+    camera: Query<(&Transform, &OrthographicProjection), With<GameCameraMarker>>,
     query: Query<(&Transform, &Velocity, &Laser)>,
     mut painter: ShapePainter,
 ) {
-    if let Ok(pv) = player.get_single() {
-        for (transform, v, Laser { origin, .. }) in query.iter() {
-            let dv = v.linvel - pv.linvel;
-            let (color, size) = match origin {
-                LaserOrigin::Enemy => (Color::hex("FF0000").unwrap(), Vec2::new(30.0, 2.0)),
-                LaserOrigin::Player => (Color::hex("00FF80").unwrap(), Vec2::new(20.0, 3.0)),
-            };
-            painter.reset();
-            painter.set_2d();
-            painter.set_rotation(Quat::from_axis_angle(Vec3::Z, dv.y.atan2(dv.x)));
-            painter.set_translation(transform.translation);
-            painter.color = color;
-            painter.rect(size);
+    if let Ok((pt, pv)) = player.get_single() {
+        if let Ok((_cam_transform, cam_proj)) = camera.get_single() {
+            for (transform, v, Laser { origin, .. }) in query.iter() {
+                let dp = (transform.translation
+                    - pt.translation
+                    - pv.linvel.extend(0.0) * time.delta_seconds())
+                    / cam_proj.scale;
+                let dv = v.linvel - pv.linvel;
+                let (color, size) = match origin {
+                    LaserOrigin::Enemy => (Color::hex("FF0000").unwrap(), Vec2::new(40.0, 5.0)),
+                    LaserOrigin::Player => (Color::hex("00FF80").unwrap(), Vec2::new(30.0, 5.0)),
+                };
+                painter.reset();
+                painter.set_2d();
+                painter.render_layers = Some(RenderLayers::layer(UI_LAYER));
+                painter.set_rotation(Quat::from_axis_angle(Vec3::Z, dv.y.atan2(dv.x)));
+                painter.set_translation(dp);
+                painter.color = color;
+                painter.rect(size / cam_proj.scale);
+            }
         }
     }
 }
@@ -83,7 +94,7 @@ pub fn spawn(commands: &mut Commands, position: Vec2, velocity: Vec2, props: Las
         TransformBundle::from_transform(transform),
         RigidBody::KinematicVelocityBased,
         Ccd::enabled(),
-        Collider::ball(2.0),
+        Collider::ball(4.0),
         ColliderMassProperties::Mass(1.0),
         Velocity::linear(velocity),
         ActiveEvents::COLLISION_EVENTS,
