@@ -70,7 +70,7 @@ fn initialize_game_camera(
             LayerData {
                 speed: LayerSpeed::Bidirectional(0.5, 0.5),
                 repeat: LayerRepeat::Bidirectional(RepeatStrategy::Same, RepeatStrategy::Same),
-                path: "stars_light_1.png".to_string(),
+                path: "stars_light_1.webp".to_string(),
                 tile_size: Vec2::new(2000.0, 2000.0),
                 cols: 1,
                 rows: 1,
@@ -81,7 +81,7 @@ fn initialize_game_camera(
             LayerData {
                 speed: LayerSpeed::Bidirectional(0.0, 0.0),
                 repeat: LayerRepeat::Bidirectional(RepeatStrategy::Same, RepeatStrategy::Same),
-                path: "stars_light_1.png".to_string(),
+                path: "stars_light_1.webp".to_string(),
                 tile_size: Vec2::new(2000.0, 2000.0),
                 cols: 1,
                 rows: 1,
@@ -92,7 +92,7 @@ fn initialize_game_camera(
             LayerData {
                 speed: LayerSpeed::Bidirectional(1.0, 1.0),
                 repeat: LayerRepeat::Bidirectional(RepeatStrategy::Same, RepeatStrategy::Same),
-                path: "nasa_milky_way.png".to_string(),
+                path: "nasa_milky_way.webp".to_string(),
                 tile_size: Vec2::new(3840.0, 2160.0),
                 cols: 1,
                 rows: 1,
