@@ -75,7 +75,9 @@ pub fn time_power(settings: &GameSettings) -> f32 {
     match settings.difficulty {
         Difficulty::Hard => 1.45,
         Difficulty::Impossible => 1.6,
-        _ => 1.2,
+        Difficulty::Normal => 1.2,
+        Difficulty::Easy => 1.1,
+        Difficulty::GodMode => 1.0,
     }
 }
 
