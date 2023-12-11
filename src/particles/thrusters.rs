@@ -27,9 +27,9 @@ pub fn spawn_rotation_thruster_cone(
     let particle_speed_distribution = Uniform::new(100.0, 600.0);
     let particle_end_radius_distribution = Uniform::new::<f32, f32>(1.0, 3.0);
     let (n_mul, life_mul) = match entities_quantity {
-        EntitiesQuantity::Some => (8, 0.75),
-        EntitiesQuantity::ALot => (12, 1.0),
-        EntitiesQuantity::TooMuch => (12, 1.5),
+        EntitiesQuantity::Some => (3, 0.75),
+        EntitiesQuantity::ALot => (4, 1.0),
+        EntitiesQuantity::TooMuch => (5, 1.0),
     };
     let n = (rng.gen::<f32>().abs().min(1.0) * 10.0) as u32 + 1;
     for _ in 0..(n * n_mul) {
@@ -105,9 +105,9 @@ pub fn spawn_main_thruster_particles(
                     max_speed_at_current_thrust,
                 );
                 let (n_mul, life_mul) = match game_settings.entities_quantity {
-                    EntitiesQuantity::Some => (20.0, 0.75),
-                    EntitiesQuantity::ALot => (50.0, 1.0),
-                    EntitiesQuantity::TooMuch => (50.0, 1.4),
+                    EntitiesQuantity::Some => (10.0, 0.75),
+                    EntitiesQuantity::ALot => (20.0, 1.0),
+                    EntitiesQuantity::TooMuch => (30.0, 1.0),
                 };
                 let n = (rng.gen::<f32>().abs()
                     * n_mul
