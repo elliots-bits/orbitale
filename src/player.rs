@@ -55,13 +55,13 @@ pub fn control(
         let mut angular_impulse = 0.0;
         let xy = transform.translation.xy();
         let particle_distance = 24.0;
-        if keys.pressed(KeyCode::Up) {
+        if keys.pressed(KeyCode::Up) || keys.pressed(KeyCode::W) {
             thruster.throttle(time.delta_seconds());
         } else {
             thruster.release(time.delta_seconds());
         }
 
-        if keys.pressed(KeyCode::Right) {
+        if keys.pressed(KeyCode::Right) || keys.pressed(KeyCode::D) {
             angular_impulse -= ROTATION_IMPULSE;
             spawn_rotation_thruster_cone(
                 &mut commands,
@@ -79,7 +79,7 @@ pub fn control(
                 velocity.linvel,
                 transform.down().xy().normalize(),
             );
-        } else if keys.pressed(KeyCode::Left) {
+        } else if keys.pressed(KeyCode::Left) || keys.pressed(KeyCode::A) {
             angular_impulse += ROTATION_IMPULSE;
             spawn_rotation_thruster_cone(
                 &mut commands,
