@@ -99,26 +99,47 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
         ))
         .id();
 
-    let new_game_title = commands
-        .spawn((TextBundle::from_section(
-            "New Game",
-            TextStyle {
-                font_size: 80.0,
-                font: asset_server.load("fusion-pixel-12px-proportional-latin.ttf"),
-                color: PRIMARY_COLOR,
+    // let new_game_title = commands
+    //     .spawn((TextBundle::from_section(
+    //         "New Game",
+    //         TextStyle {
+    //             font_size: 80.0,
+    //             font: asset_server.load("fusion-pixel-12px-proportional-latin.ttf"),
+    //             color: PRIMARY_COLOR,
+    //             ..default()
+    //         },
+    //     )
+    //     .with_style(Style {
+    //         margin: UiRect {
+    //             bottom: Val::Px(20.),
+    //             ..Default::default()
+    //         },
+    //         ..Default::default()
+    //     }),))
+    //     .id();
+
+    let game_title = commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Px(576.0),
+                    height: Val::Px(172.0),
+                    margin: UiRect {
+                        // top: Val::Percent(5.),
+                        bottom: Val::Percent(2.),
+                        ..Default::default()
+                    },
+                    ..default()
+                },
+                // a `NodeBundle` is transparent by default, so to see the image we have to its color to `WHITE`
+                background_color: Color::WHITE.into(),
                 ..default()
             },
-        )
-        .with_style(Style {
-            margin: UiRect {
-                bottom: Val::Px(20.),
-                ..Default::default()
-            },
-            ..Default::default()
-        }),))
+            UiImage::new(asset_server.load("orbitale_title.png")),
+        ))
         .id();
 
-    commands.entity(menu).add_child(new_game_title);
+    commands.entity(menu).add_child(game_title);
 
     let difficulty_title = commands
         .spawn(TextBundle::from_section(
