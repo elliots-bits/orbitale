@@ -326,7 +326,7 @@ fn play_on_press_space(
     mut next_state: ResMut<NextState<AppState>>,
     keys: Res<Input<KeyCode>>,
 ) {
-    if keys.pressed(KeyCode::Space) && time.elapsed_seconds() - settings.time_of_death > 3.0 {
+    if keys.just_pressed(KeyCode::Space) {
         next_state.set(AppState::Game);
     }
 }
