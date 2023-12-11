@@ -130,10 +130,6 @@ pub fn setup(
     asset_server: Res<AssetServer>,
     starter_planet: Query<(&StarterPlanetMarker, &CircularOrbitChain)>,
 ) {
-    let (impulse, rampup) = match settings.difficulty {
-        Difficulty::Impossible => (DRIVE_ENGINE_MAX_IMPULSE * 1.5, 40.0),
-        _ => (DRIVE_ENGINE_MAX_IMPULSE, 16.0),
-    };
     if player.is_empty() {
         debug!("Player setup");
         if let Ok((player_orbit, planet)) = starter_planet.get_single() {
@@ -142,6 +138,10 @@ pub fn setup(
                 x: player_orbit.theta.cos() * player_orbit.orbit_radius,
                 y: player_orbit.theta.sin() * player_orbit.orbit_radius,
             } + planet_pos;
+            let (impulse, rampup) = match settings.difficulty {
+                Difficulty::Impossible => (DRIVE_ENGINE_MAX_IMPULSE * 1.5, 60.0),
+                _ => (DRIVE_ENGINE_MAX_IMPULSE, 16.0),
+            };
             commands.spawn((
                 PlayerMarker,
                 HealthPoints {

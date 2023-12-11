@@ -110,9 +110,25 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         5e7,
     ));
 
-    let mut parent_volcanic = OrbitHierarchyNode::start(Vec2 { x: 0.0, y: 50000.0 });
+    let mut parent_massive_pink_hole = OrbitHierarchyNode::start(Vec2 {
+        x: 0.0,
+        y: 100000.0,
+    });
     commands.spawn(gen_body_bundle(
-        &parent_volcanic,
+        &parent_massive_pink_hole,
+        3.0,
+        asset_server.load("planet_pink_shiny_rock.png"),
+        sprite_radius,
+        7e7,
+    ));
+
+    let volcanic = parent_massive_pink_hole.with_child(CircularOrbitDef {
+        theta: -PI / 2.0,
+        radius: 50000.0,
+        freq: 1.0 / 30.0,
+    });
+    commands.spawn(gen_body_bundle(
+        &volcanic,
         5.0,
         asset_server.load("planet_big_1.png"),
         sprite_radius,
@@ -201,7 +217,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     }
 
     commands.insert_resource(OrbitHierarchy {
-        roots: vec![parent_saturn, parent_volcanic, parent_pink_rock],
+        roots: vec![parent_saturn, parent_massive_pink_hole, parent_pink_rock],
     });
 }
 
