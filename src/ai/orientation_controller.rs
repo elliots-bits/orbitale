@@ -86,7 +86,7 @@ impl OrientationController {
                     let ttt =
                         (self.rotation_target.unwrap() - current_orientation) / angular_velocity;
                     if ttt < 0.0 {
-                        ttt + 2.0 * PI / angular_velocity
+                        ttt + 2.0 * PI / angular_velocity.abs()
                     } else {
                         ttt
                     }

@@ -15,7 +15,7 @@ impl HealthPoints {
             Difficulty::Easy => 0.25,
             Difficulty::Normal => 1.0,
             Difficulty::Hard => 2.0,
-            Difficulty::Impossible => 50.0,
+            Difficulty::Impossible => 3.0,
         };
 
         self.current = (self.current - (amount * damage_multiplier)).max(0.0);

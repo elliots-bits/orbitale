@@ -17,7 +17,7 @@ use crate::{
     GLOBAL_IMPULSE_DURATION_MULT,
 };
 
-const LASER_HIT_LINEAR_IMPULSE: f32 = 10.0 * GLOBAL_IMPULSE_DURATION_MULT;
+const LASER_HIT_LINEAR_IMPULSE: f32 = 1.0 * GLOBAL_IMPULSE_DURATION_MULT;
 const LASER_HIT_ANGULAR_IMPULSE: f32 = 150.0 * GLOBAL_IMPULSE_DURATION_MULT;
 
 pub fn update(
@@ -61,7 +61,7 @@ pub fn update(
                     let dv = pv.linvel - lv.linvel;
                     let dp = pt.translation.xy() - lt.translation.xy();
                     let dot = -dv.normalize_or_zero().dot(dp.normalize_or_zero());
-                    let perp_dot = -dv.normalize_or_zero().perp_dot(dp.normalize());
+                    let perp_dot = -dv.normalize_or_zero().perp_dot(dp.normalize_or_zero());
                     let linear =
                         dp.normalize_or_zero() * LASER_HIT_LINEAR_IMPULSE * dot * PLAYER_MASS;
                     let angular = LASER_HIT_ANGULAR_IMPULSE * perp_dot * PLAYER_MASS;

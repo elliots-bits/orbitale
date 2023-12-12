@@ -89,12 +89,16 @@ pub fn spawn(commands: &mut Commands, position: Vec2, velocity: Vec2, props: Las
         y: position.y,
         z: 1.0,
     });
+    let collider_radius = match props.origin {
+        LaserOrigin::Player => 6.0,
+        LaserOrigin::Enemy => 2.5,
+    };
     commands.spawn((
         props,
         TransformBundle::from_transform(transform),
         RigidBody::KinematicVelocityBased,
         Ccd::enabled(),
-        Collider::ball(4.0),
+        Collider::ball(collider_radius),
         ColliderMassProperties::Mass(1.0),
         Velocity::linear(velocity),
         ActiveEvents::COLLISION_EVENTS,

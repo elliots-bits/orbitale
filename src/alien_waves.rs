@@ -98,7 +98,7 @@ pub fn update(
                     Difficulty::Easy => (0.75, 0.75),
                     Difficulty::Normal => (1.0, 1.0),
                     Difficulty::Hard => (2.0, 1.33),
-                    Difficulty::Impossible => (3.0, 1.33),
+                    Difficulty::Impossible => (3.0, 1.5),
                 };
 
             for _ in 0..n_to_spawn {
@@ -127,7 +127,7 @@ pub fn update(
                     },
                     ShipAi::default(),
                     OrientationController::new(
-                        ALIEN_SHIP_ROTATION_IMPULSE * difficulty_rotation_multiplier * 0.75,
+                        ALIEN_SHIP_ROTATION_IMPULSE * difficulty_rotation_multiplier * 0.9,
                     ),
                     PositionController::new(
                         ALIEN_SHIP_DRIVE_ENGINE_IMPULSE * difficulty_engine_multiplier * 0.75,

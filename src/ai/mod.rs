@@ -18,8 +18,8 @@ use self::{
 
 const MAX_AI_STATE_UPDATES_PER_FRAME: u32 = 1000;
 const MAX_DYNAMICS_CONTROLLERS_UPDATES_PER_FRAME: u32 = 250;
-const MIN_DELTA_V: f32 = 50.0;
-const MATCH_DELTA_V_THRESHOLD: f32 = 5000.0;
+const MIN_DELTA_V: f32 = 25.0;
+const MATCH_DELTA_V_THRESHOLD: f32 = 3000.0;
 pub const AGGRO_RANGE: f32 = 1500.0;
 
 #[derive(Resource, Default)]
@@ -125,7 +125,7 @@ pub fn update_ai_controllers(
                         AiState::Aggro => {
                             o_controller.target(angle_to_player);
                             o_controller.update_command(&time, current_orientation, v.angvel);
-                            p_controller.sleep(&time, 0.5);
+                            p_controller.sleep(&time, 0.2);
                         }
                         AiState::Intercept => {
                             // Either aim towards towards player to accelerate,
@@ -137,12 +137,12 @@ pub fn update_ai_controllers(
                                 dv.length() * (-dv.normalize_or_zero()).dot(d.normalize_or_zero());
                             // debug!("speed_dot={}", speed_dot);
                             let should_brake = p_controller
-                                .should_brake((d.length() - AGGRO_RANGE / 2.0).max(0.0), speed_dot);
+                                .should_brake((d.length() - AGGRO_RANGE * 0.5).max(0.0), speed_dot);
                             // debug!("should_brake={}", should_brake);
 
                             if speed_dot > 0.25 && should_brake {
                                 // debug!("Braking");
-                                o_controller.target(dv.y.atan2(dv.x) + 2.0 * PI);
+                                o_controller.target(dv.y.atan2(dv.x));
                                 o_controller.update_command(&time, current_orientation, v.angvel);
                                 if o_controller
                                     .at_target(current_orientation, MIN_ROTATION_THETA * 2.0)
