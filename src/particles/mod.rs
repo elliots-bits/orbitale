@@ -2,10 +2,7 @@ pub mod thrusters;
 
 use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::dynamics::Velocity;
-use bevy_vector_shapes::{
-    painter::ShapePainter,
-    shapes::{DiscPainter, RectPainter},
-};
+use bevy_vector_shapes::{painter::ShapePainter, shapes::DiscPainter};
 
 use crate::{
     camera::{GameCameraMarker, UI_LAYER},

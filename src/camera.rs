@@ -24,9 +24,6 @@ pub struct GameCameraMarker;
 #[derive(Component)]
 pub struct UICameraMarker;
 
-#[derive(Component)]
-pub struct ParticlesCameraMarker;
-
 pub fn setup(app: &mut App) {
     app.add_systems(
         OnEnter(AppState::Game),

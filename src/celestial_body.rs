@@ -21,9 +21,8 @@ pub struct StarterPlanetMarker {
 }
 
 #[derive(Resource)]
-pub struct OrbitHierarchy {
-    pub roots: Vec<OrbitHierarchyNode>,
-}
+
+pub struct OrbitHierarchy(#[allow(dead_code)] Vec<OrbitHierarchyNode>);
 
 pub struct OrbitHierarchyNode {
     pub dynamics: CircularOrbitChain,
@@ -216,9 +215,11 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ));
     }
 
-    commands.insert_resource(OrbitHierarchy {
-        roots: vec![parent_saturn, parent_massive_pink_hole, parent_pink_rock],
-    });
+    commands.insert_resource(OrbitHierarchy(vec![
+        parent_saturn,
+        parent_massive_pink_hole,
+        parent_pink_rock,
+    ]));
 }
 
 fn gen_body_bundle(
