@@ -18,12 +18,10 @@ impl PositionController {
     }
 
     pub fn sleep(&mut self, time: &Time, duration: f32) {
-        // debug!("cmd: sleep for {}", duration);
         self.current_command = (0.0, time.elapsed_seconds() + duration);
     }
 
     pub fn accelerate(&mut self, time: &Time, duration: f32) {
-        // debug!("cmd: accelerate for {}", duration);
         self.current_command = (self.thrust_available, time.elapsed_seconds() + duration);
     }
 
@@ -32,15 +30,14 @@ impl PositionController {
         v0 * ALIEN_SHIP_MASS / (self.thrust_available * GLOBAL_IMPULSE_DURATION_MULT)
     }
 
-    pub fn should_brake(&self, d: f32, v0: f32) -> bool {
-        if v0.abs() < 0.0001 || d.signum() != v0.signum() {
+    pub fn should_brake(&self, distance: f32, velocity: f32) -> bool {
+        if velocity.abs() < 0.0001 || distance.signum() != velocity.signum() {
             // We're going in the wrong way, we should accelerate towards the target.
-            // debug!("should_brake: wrong way");
             false
         } else {
-            let tts = self.time_to_stop(v0);
-            // debug!("Time to stop: {}", tts);
-            tts + 1.0 >= d / v0
+            // We start braking if the time needed to stop is greater than the time to reach the target at the current speed.
+            // We add a 1 second margin to execute the turn-around maneuver.
+            self.time_to_stop(velocity) + 1.0 >= distance / velocity
         }
     }
 }

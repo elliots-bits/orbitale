@@ -26,8 +26,8 @@ impl OrientationController {
 
     pub fn update_command(&mut self, time: &Time, p0: f32, v0: f32) {
         if self.rotation_target.is_some() {
-            let (torque, dt) = self.torque_needed(p0, v0);
-            self.current_command = (torque, time.elapsed_seconds() + dt);
+            let (torque, delta_time) = self.torque_needed(p0, v0);
+            self.current_command = (torque, time.elapsed_seconds() + delta_time);
             // debug!("cmd={:?}", self.current_command);
         }
     }
@@ -36,12 +36,12 @@ impl OrientationController {
         self.shortest_arc(self.rotation_target.unwrap(), p0).abs() < epsilon
     }
 
-    fn to_bounded_positive_angle(a: f32) -> f32 {
-        let a = a % (2.0 * PI);
-        if a < 0.0 {
-            a + 2.0 * PI
+    fn to_bounded_positive_angle(theta: f32) -> f32 {
+        let theta = theta % (2.0 * PI);
+        if theta < 0.0 {
+            theta + 2.0 * PI
         } else {
-            a
+            theta
         }
     }
 
@@ -69,29 +69,25 @@ impl OrientationController {
 
     pub fn should_brake(&self, current_orientation: f32, angular_velocity: f32) -> Option<bool> {
         if angular_velocity.abs() == 0.0 {
+            // If we are not rotating, we don't need to brake.
             Some(false)
         } else {
             let current_orientation =
                 OrientationController::to_bounded_positive_angle(current_orientation);
             if self.rotation_target.is_some() {
-                let tts = self.time_to_stop(angular_velocity);
-                // debug!(
-                //     "current={}, target={}, v={}, tts={}",
-                //     current_orientation,
-                //     self.rotation_target.unwrap(),
-                //     angular_velocity,
-                //     tts,
-                // );
-                let ttt_at_current_vel = {
-                    let ttt =
+                // We brake if the time needed to stop matches the time to reach the target at the current velocity
+                let time_to_stop = self.time_to_stop(angular_velocity);
+
+                let time_to_target_at_current_velocity = {
+                    let time_to_target =
                         (self.rotation_target.unwrap() - current_orientation) / angular_velocity;
-                    if ttt < 0.0 {
-                        ttt + 2.0 * PI / angular_velocity.abs()
+                    if time_to_target < 0.0 {
+                        time_to_target + 2.0 * PI / angular_velocity.abs()
                     } else {
-                        ttt
+                        time_to_target
                     }
                 };
-                Some(tts + 0.1 >= ttt_at_current_vel)
+                Some(time_to_stop + 0.1 >= time_to_target_at_current_velocity)
             } else {
                 None
             }
@@ -103,19 +99,20 @@ impl OrientationController {
     }
 
     pub fn torque_needed(&self, current_orientation: f32, angular_velocity: f32) -> (f32, f32) {
+        // Compute what torque is needed to reach target orientation using current orientation & angular velocity
         let current_orientation =
             OrientationController::to_bounded_positive_angle(current_orientation);
-        // debug!("theta={}, v={}", current_orientation, angular_velocity);
-        // debug!("target={}", self.rotation_target.unwrap());
 
         let shortest_arc = self.shortest_arc(current_orientation, self.rotation_target.unwrap());
         let arc_torque_limit = shortest_arc.abs().min(1.0);
         if self.should_stabilize(angular_velocity) {
-            // debug!("stabilizing");
+            // We are rotating too fast and need to stabilize.
+            // We rotate in the opposite direction of current rotation for the required duration to reach a stop.
             let torque = -angular_velocity.signum() * self.torque_available;
             (torque, 0.1)
         } else if shortest_arc.abs() < MIN_ROTATION_THETA {
-            // debug!("target reached");
+            // We are facing the correct orientation.
+            // We issue an empty command for the duration that we will be facing the correct orientation.
             (
                 0.0,
                 (0.45 * (MIN_ROTATION_THETA - shortest_arc.abs()) / angular_velocity.abs())
@@ -123,24 +120,23 @@ impl OrientationController {
                     .max(0.1),
             )
         } else {
-            let ttt_at_current_speed = if angular_velocity.abs() == 0.0 {
+            // We are not facing the correct orientation.
+            // We need to either accelerate in the required direction or brake to reach a stop at the wanted orientation.
+            // We compute the time to reach the target orientation at current velocity and make a decision based on that.
+            let time_to_target_at_current_speed = if angular_velocity.abs() == 0.0 {
                 f32::INFINITY
             } else {
-                let ttt_at_current_speed =
+                let time_to_target_at_current_speed =
                     (self.rotation_target.unwrap() - current_orientation) / angular_velocity;
-                if ttt_at_current_speed < 0.0 {
-                    ttt_at_current_speed + 2.0 * PI / angular_velocity.abs()
+                if time_to_target_at_current_speed < 0.0 {
+                    time_to_target_at_current_speed + 2.0 * PI / angular_velocity.abs()
                 } else {
-                    ttt_at_current_speed
+                    time_to_target_at_current_speed
                 }
             };
 
-            // debug!(
-            //     "At current speed, target will be reached in: {}",
-            //     ttt_at_current_speed
-            // );
-            if ttt_at_current_speed > 1.0 {
-                // debug!("we far from target, shortest_arc={}", shortest_arc);
+            if time_to_target_at_current_speed > 1.0 {
+                // We will reach the target in more that 1 second, we can accelerate.
                 (
                     self.torque_available * shortest_arc.signum(),
                     (2.1 * angular_velocity.abs() / self.torque_available)
@@ -148,31 +144,25 @@ impl OrientationController {
                         .min(0.2),
                 )
             } else {
-                // debug!("Executing maneuver");
+                // We will reach the target in less that 1 second. We check if we need to start braking.
                 let should_brake = self
                     .should_brake(current_orientation, angular_velocity)
                     .unwrap();
-                let tts: f32 = self.time_to_stop(angular_velocity);
+                let time_to_stop: f32 = self.time_to_stop(angular_velocity);
                 if should_brake {
-                    // debug!(
-                    //     "braking, torque: {}",
-                    //     self.torque_available * -angular_velocity.signum()
-                    // );
+                    // We rotate in the opposite direction of current rotation for the duration needed to stop.
                     (
                         self.torque_available * arc_torque_limit * -angular_velocity.signum(),
-                        (tts - 0.05).max(0.01),
+                        (time_to_stop - 0.05).max(0.01),
                     )
-                } else if ttt_at_current_speed > 0.5 {
-                    // debug!(
-                    //     "accelerating, torque: {}",
-                    //     self.torque_available * angular_velocity.signum()
-                    // );
+                } else if time_to_target_at_current_speed > 0.5 {
+                    // We are more than 0.5 seconds away, we can accelerate for a little bit.
                     (
                         self.torque_available * arc_torque_limit * angular_velocity.signum(),
                         0.01,
                     )
                 } else {
-                    // debug!("keep rotating..");
+                    // We'll brake soon but not right now. We keep rotating.
                     (0.0, 0.05)
                 }
             }

@@ -171,7 +171,6 @@ fn setup_credits_screen(mut commands: Commands, asset_server: Res<AssetServer>) 
         .spawn(
             TextBundle::from_section(
                 "Background image: The center of our galaxy captured by 3 telescopes: NASA/JPL-Caltech/ESA/CXC/STScI",
-                
                 TextStyle {
                     font_size: 30.0,
                     font: asset_server.load("fusion-pixel-12px-proportional-latin.ttf"),

@@ -61,29 +61,40 @@ pub fn update_ai_states(
         With<AlienShipMarker>,
     >,
 ) {
-    if let Ok((pt, pv)) = player.get_single() {
+    if let Ok((player_transform, player_velocity)) = player.get_single() {
         let mut to_push_back = Vec::<Entity>::new();
         let mut updated_controllers = 0;
-        while let Some(e) = queue.ai_state.pop_front() {
+        while let Some(enemy_entity) = queue.ai_state.pop_front() {
+            // We limit the number of controller updates per frame to limit performance impact.
+            // Controllers that were not updated stay in the queue for the next frames.
             if updated_controllers < MAX_AI_STATE_UPDATES_PER_FRAME {
-                if let Ok((t, v, traj, mut ai)) = ships.get_mut(e) {
-                    let dp = pt.translation.xy() - t.translation.xy();
-                    let dv = pv.linvel - v.linvel;
+                if let Ok((enemy_transform, enemy_velocity, enemy_trajectory, mut ai_controller)) =
+                    ships.get_mut(enemy_entity)
+                {
+                    // We update the AI controller state according to our relative position & velocity to the player,
+                    // and according to our current trajectory w.r.t celestial bodies.
+                    let relative_position =
+                        player_transform.translation.xy() - enemy_transform.translation.xy();
+                    let relative_velocity = player_velocity.linvel - enemy_velocity.linvel;
 
-                    if dp.length() < AGGRO_RANGE {
-                        ai.state = AiState::Aggro;
-                    } else if traj.closest_flyby < 32.0 {
-                        ai.state = AiState::AvoidCrash;
-                    } else if ai.state != AiState::Intercept
-                        && dv.length() > MATCH_DELTA_V_THRESHOLD
+                    if relative_position.length() < AGGRO_RANGE {
+                        // We are near the player and can start attacking it.
+                        ai_controller.state = AiState::Aggro;
+                    } else if enemy_trajectory.closest_flyby < 32.0 {
+                        // We are on a collision course with a celestial body and need to avoid crashing.
+                        ai_controller.state = AiState::AvoidCrash;
+                    } else if ai_controller.state != AiState::Intercept
+                        && relative_velocity.length() > MATCH_DELTA_V_THRESHOLD
                     {
-                        ai.state = AiState::MatchVelocities;
+                        // The player is getting away fast and we need to catch up.
+                        ai_controller.state = AiState::MatchVelocities;
                     } else {
-                        ai.state = AiState::Intercept;
+                        // The player is at a appreciable distance and we need to get closer.
+                        ai_controller.state = AiState::Intercept;
                     }
                     // debug!("Set ai state to {:?}", ai.state);
                     updated_controllers += 1;
-                    to_push_back.push(e);
+                    to_push_back.push(enemy_entity);
                 }
             } else {
                 break;
@@ -111,45 +122,68 @@ pub fn update_ai_controllers(
         With<AlienShipMarker>,
     >,
 ) {
-    if let Ok((player_t, player_v)) = player.get_single() {
+    if let Ok((player_transform, player_velocity)) = player.get_single() {
         let mut updated_controllers = 0;
-        while let Some(e) = queue.controllers.pop_front() {
+        while let Some(enemy_entity) = queue.controllers.pop_front() {
+            // We limit the number of controller updates per frame to limit performance impact.
+            // Controllers that were not updated stay in the queue for the next frames.
+
             if updated_controllers < MAX_DYNAMICS_CONTROLLERS_UPDATES_PER_FRAME {
-                if let Ok((t, v, grav, ai, mut o_controller, mut p_controller)) = ships.get_mut(e) {
-                    let local_forward = t.up().xy();
-                    let d = (player_t.translation - t.translation).xy();
-                    let dv = player_v.linvel - v.linvel;
-                    let angle_to_player = d.y.atan2(d.x);
+                if let Ok((
+                    enemy_transform,
+                    enemy_velocity,
+                    gravity,
+                    ai_controller,
+                    mut orientation_controller,
+                    mut position_controller,
+                )) = ships.get_mut(enemy_entity)
+                {
+                    let local_forward = enemy_transform.up().xy();
+                    let relative_position =
+                        (player_transform.translation - enemy_transform.translation).xy();
+                    let relative_velocity = player_velocity.linvel - enemy_velocity.linvel;
+                    let angle_to_player: f32 = relative_position.y.atan2(relative_position.x);
                     let current_orientation = local_forward.y.atan2(local_forward.x);
-                    match ai.state {
+                    match ai_controller.state {
                         AiState::Aggro => {
-                            o_controller.target(angle_to_player);
-                            o_controller.update_command(&time, current_orientation, v.angvel);
-                            p_controller.sleep(&time, 0.2);
+                            orientation_controller.target(angle_to_player);
+                            orientation_controller.update_command(
+                                &time,
+                                current_orientation,
+                                enemy_velocity.angvel,
+                            );
+                            position_controller.sleep(&time, 0.2);
                         }
                         AiState::Intercept => {
-                            // Either aim towards towards player to accelerate,
-                            // Or in the opposite direction to decelerate.
-                            // debug!("-------");
-                            // debug!("d={}", d);
-                            // debug!("dv={}", dv);
-                            let speed_dot =
-                                dv.length() * (-dv.normalize_or_zero()).dot(d.normalize_or_zero());
-                            // debug!("speed_dot={}", speed_dot);
-                            let should_brake = p_controller
-                                .should_brake((d.length() - AGGRO_RANGE * 0.5).max(0.0), speed_dot);
-                            // debug!("should_brake={}", should_brake);
+                            // Either aim towards towards player and accelerate to put on intercept course,
+                            // Or turn around and brake in order to stop near the player.
+
+                            let speed_dot = relative_velocity.length()
+                                * (-relative_velocity.normalize_or_zero())
+                                    .dot(relative_position.normalize_or_zero());
+
+                            let should_brake = position_controller.should_brake(
+                                (relative_position.length() - AGGRO_RANGE * 0.5).max(0.0),
+                                speed_dot,
+                            );
 
                             if speed_dot > 0.25 && should_brake {
-                                // debug!("Braking");
-                                o_controller.target(dv.y.atan2(dv.x));
-                                o_controller.update_command(&time, current_orientation, v.angvel);
-                                if o_controller
+                                // Our trajectory is aligned with the player's and we need to start reducing relative velocity.
+                                orientation_controller
+                                    .target(relative_velocity.y.atan2(relative_velocity.x));
+                                orientation_controller.update_command(
+                                    &time,
+                                    current_orientation,
+                                    enemy_velocity.angvel,
+                                );
+                                if orientation_controller
                                     .at_target(current_orientation, MIN_ROTATION_THETA * 2.0)
                                 {
-                                    p_controller.accelerate(&time, 0.05);
+                                    // We are facing opposite direction to our relative velocity and can thrust to brake.
+                                    position_controller.accelerate(&time, 0.05);
                                 }
                             } else {
+                                // Our trajectory is not aligned with the player and we need to adjust it.
                                 let wanted_dv = Vec2 {
                                     x: angle_to_player.cos(),
                                     y: angle_to_player.sin(),
@@ -157,45 +191,63 @@ pub fn update_ai_controllers(
                                 .normalize()
                                     * MATCH_DELTA_V_THRESHOLD;
 
-                                let drift = -dv - wanted_dv;
-                                // debug!("wanted dv: {}", wanted_dv);
-                                // debug!("drift: {}", drift);
+                                // We compute the direction we should face to match player trajectory.
+                                let drift = -relative_velocity - wanted_dv;
                                 let direction = -drift;
                                 let orientation = direction.y.atan2(direction.x);
-                                // debug!("aiming at: {}", orientation);
-                                o_controller.target(orientation);
-                                o_controller.update_command(&time, current_orientation, v.angvel);
-                                if o_controller.at_target(current_orientation, MIN_ROTATION_THETA)
+
+                                orientation_controller.target(orientation);
+                                orientation_controller.update_command(
+                                    &time,
+                                    current_orientation,
+                                    enemy_velocity.angvel,
+                                );
+                                if orientation_controller
+                                    .at_target(current_orientation, MIN_ROTATION_THETA)
                                     && drift.length() > MIN_DELTA_V
                                 {
-                                    // debug!("accelerating");
-                                    p_controller.accelerate(&time, 0.05);
+                                    // We are aligned with desired trajectory and can start accelerating.
+                                    position_controller.accelerate(&time, 0.05);
                                 } else {
-                                    // debug!("we're fast enough");
-                                    p_controller.sleep(&time, 0.05);
+                                    // We are not aligned or already going fast enough towards desired trajectory.
+                                    // We do not accelerate.
+                                    position_controller.sleep(&time, 0.05);
                                 }
                             }
                         }
                         AiState::MatchVelocities => {
-                            let orientation = dv.y.atan2(dv.x);
-                            o_controller.target(orientation);
-                            o_controller.update_command(&time, current_orientation, v.angvel);
-                            if o_controller.at_target(current_orientation, PI / 8.0) {
-                                let tts = p_controller.time_to_stop(dv.length());
-                                p_controller
+                            // Our ship needs to match player velocity.
+                            // We face the relative velocity direction and accelerate.
+                            let orientation = relative_velocity.y.atan2(relative_velocity.x);
+                            orientation_controller.target(orientation);
+                            orientation_controller.update_command(
+                                &time,
+                                current_orientation,
+                                enemy_velocity.angvel,
+                            );
+                            if orientation_controller.at_target(current_orientation, PI / 8.0) {
+                                let tts =
+                                    position_controller.time_to_stop(relative_velocity.length());
+                                position_controller
                                     .accelerate(&time, (tts / 2.0 - 0.1).max(0.01).min(0.25));
                             }
                         }
                         AiState::AvoidCrash => {
+                            // We are on a collision course with a celestial body.
+                            // We need to aim for an escape trajectory facing away from the current gravity vector we are experiencing.
                             let escape_vector = (-Vec2::Y
-                                .rotate(grav.last_acceleration.normalize_or_zero())
-                                - v.linvel.normalize_or_zero())
+                                .rotate(gravity.last_acceleration.normalize_or_zero())
+                                - enemy_velocity.linvel.normalize_or_zero())
                             .normalize_or_zero();
                             let escape_orientation = escape_vector.y.atan2(escape_vector.x);
-                            o_controller.target(escape_orientation);
-                            o_controller.update_command(&time, current_orientation, v.angvel);
-                            if o_controller.at_target(current_orientation, PI / 4.0) {
-                                p_controller.accelerate(&time, 1.0);
+                            orientation_controller.target(escape_orientation);
+                            orientation_controller.update_command(
+                                &time,
+                                current_orientation,
+                                enemy_velocity.angvel,
+                            );
+                            if orientation_controller.at_target(current_orientation, PI / 4.0) {
+                                position_controller.accelerate(&time, 1.0);
                             }
                         }
                     };
