@@ -4,7 +4,7 @@ use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_rapier2d::{dynamics::Velocity, geometry::Collider};
 use bevy_vector_shapes::{
     painter::ShapePainter,
-    shapes::{Cap, DiscPainter, LinePainter, RectPainter},
+    shapes::{Cap, DiscPainter, RectPainter},
 };
 use colorgrad::CustomGradient;
 

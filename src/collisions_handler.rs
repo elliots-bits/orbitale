@@ -38,7 +38,7 @@ pub fn update(
     settings: Res<GameSettings>,
 ) {
     for event in collisions.read() {
-        if let &CollisionEvent::Started(a, b, contact) = event {
+        if let &CollisionEvent::Started(a, b, _contact) = event {
             // debug!("Collision detected between {:?} and {:?}", a, b);
 
             // Check for an alien laser hitting the player
@@ -102,7 +102,7 @@ pub fn update(
             }
 
             // Check for player ship hitting alien ship
-            if let Some(((e, mut alien_ship, _, _), _)) =
+            if let Some(((_e, mut alien_ship, _, _), _)) =
                 if let (Ok(s), Ok(p)) = (alien_ships.get_mut(a), player.get(b)) {
                     Some((s, p))
                 } else if let (Ok(s), Ok(p)) = (alien_ships.get_mut(b), player.get(a)) {
@@ -116,7 +116,7 @@ pub fn update(
             }
 
             // Check for player ship hitting celestial body
-            if let Some(((player_entity, pt, pv, mut player_hp), _)) =
+            if let Some(((player_entity, _pt, _pv, mut player_hp), _)) =
                 if let (Ok(p), Ok(b)) = (player.get_mut(a), celestial_bodies.get(b)) {
                     Some((p, b))
                 } else if let (Ok(p), Ok(b)) = (player.get_mut(b), celestial_bodies.get(a)) {
@@ -143,7 +143,7 @@ pub fn update(
             }
 
             // Check for alien ship hitting celestial body
-            if let Some(((e, mut alien_hp, _, _), _)) =
+            if let Some(((_e, mut alien_hp, _, _), _)) =
                 if let (Ok(p), Ok(b)) = (alien_ships.get_mut(a), celestial_bodies.get(b)) {
                     Some((p, b))
                 } else if let (Ok(p), Ok(b)) = (alien_ships.get_mut(b), celestial_bodies.get(a)) {

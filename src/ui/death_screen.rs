@@ -320,12 +320,7 @@ fn entities_quantity_label(settings: &GameSettings) -> &'static str {
     }
 }
 
-fn play_on_press_space(
-    time: Res<Time>,
-    settings: Res<GameSettings>,
-    mut next_state: ResMut<NextState<AppState>>,
-    keys: Res<Input<KeyCode>>,
-) {
+fn play_on_press_space(mut next_state: ResMut<NextState<AppState>>, keys: Res<Input<KeyCode>>) {
     if keys.just_pressed(KeyCode::Space) {
         next_state.set(AppState::Game);
     }

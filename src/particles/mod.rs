@@ -26,11 +26,6 @@ pub enum ParticleKind {
         end_radius: f32,
         color: colorgrad::Gradient,
     },
-    Spark {
-        init_size: Vec2,
-        end_size: Vec2,
-        color: colorgrad::Gradient,
-    },
 }
 
 pub fn update(
@@ -102,20 +97,6 @@ pub fn draw(
                             lerp(*init_radius, *end_radius, lifetime_frac.powf(2.0))
                                 / cam_proj.scale,
                         );
-                    }
-                    ParticleKind::Spark {
-                        init_size,
-                        end_size,
-                        color,
-                    } => {
-                        let color = color.at(lifetime_frac as f64);
-                        painter.color = Color::rgba(
-                            color.r as f32,
-                            color.g as f32,
-                            color.b as f32,
-                            color.a as f32,
-                        );
-                        painter.rect(init_size.lerp(*end_size, lifetime_frac) / cam_proj.scale);
                     }
                 }
             }

@@ -135,7 +135,7 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         5e7,
     ));
 
-    let mut parent_pink_rock = OrbitHierarchyNode::start(Vec2 {
+    let parent_pink_rock = OrbitHierarchyNode::start(Vec2 {
         x: 70000.0,
         y: -70000.0,
     });

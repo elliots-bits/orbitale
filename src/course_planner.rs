@@ -104,7 +104,7 @@ pub fn compute_enemies_trajectories(
                 &bodies,
             );
             traj.computed_at = time.elapsed_seconds();
-            traj.step_dt = PLAYER_PLAN_STEP_DT;
+            traj.step_dt = ENEMY_PLAN_STEP_DT;
             traj.path = planned_course.path;
             traj.closest_flyby = planned_course.closest_flyby;
             total_computed += 1;
